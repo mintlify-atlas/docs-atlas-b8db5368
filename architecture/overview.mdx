@@ -1,0 +1,166 @@
+---
+title: "Architecture overview"
+description: "How the backend, frontend, and database fit together in Torneos Gestion."
+---
+
+Torneos Gestion is a three-tier web application: a React single-page application talks to a Spring Boot REST API, which persists data in PostgreSQL.
+
+---
+
+## System layers
+
+| Layer | Technology | Port |
+|---|---|---|
+| Frontend (SPA) | React 19 + Vite | 5173 (dev) |
+| Backend (REST API) | Spring Boot 3 | 8080 |
+| Database | PostgreSQL | 5432 |
+
+All frontend-to-backend communication goes through HTTP/JSON. The frontend never connects directly to the database.
+
+```
+┌─────────────────────────────────────┐
+│           Browser (React SPA)       │
+│  React Router · AuthContext · Axios │
+└──────────────┬──────────────────────┘
+               │  HTTP/JSON (port 8080)
+               ▼
+┌─────────────────────────────────────┐
+│       Spring Boot REST API          │
+│  Security Filter Chain (JWT)        │
+│  Controllers → Services → Repos     │
+└──────────────┬──────────────────────┘
+               │  JPA / Hibernate
+               ▼
+┌─────────────────────────────────────┐
+│           PostgreSQL                │
+│       Database: TorneosGestion      │
+└─────────────────────────────────────┘
+```
+
+---
+
+## Backend layer
+
+The backend is a standard Spring Boot application structured around controllers, services, and repositories.
+
+### Request pipeline
+
+Every inbound HTTP request passes through the Spring Security filter chain before reaching a controller:
+
+1. **JWT token filter** — reads the `Authorization: Bearer <token>` header, validates the signature and expiry, and loads the `Participante` into the security context.
+2. **Authorization check** — Spring Security evaluates `@PreAuthorize` annotations on controller methods to enforce role restrictions.
+3. **Controller** — maps the HTTP request to a service call and serializes the response.
+4. **Service** — contains business logic (enrollment validation, state transitions, price calculation).
+5. **Repository** — Spring Data JPA repositories issue SQL via Hibernate.
+
+### Base API path
+
+All endpoints are mounted under `/api/v1`. Two sub-namespaces separate public/participant access from admin access:
+
+| Namespace | Who can access |
+|---|---|
+| `/api/v1/auth`, `/api/v1/account`, `/api/v1/tournaments`, `/api/v1/tournament/**` | Public or `PARTICIPANTE` role |
+| `/api/v1/participantes/**`, `/api/v1/inscriptions` | `PARTICIPANTE` role (JWT required) |
+| `/api/v1/admin/**` | `ADMIN` role (separate JWT) |
+
+### Authentication and password security
+
+- Participants authenticate via `POST /api/v1/auth`. Admins use `POST /api/v1/admin/auth`.
+- Passwords are hashed with **Password4j** using a pepper stored in the environment variable `PASSWORD_PEPPER`.
+- On successful login the backend returns a signed **JWT** (secret from `JWT_SECRET`). The client stores this token and sends it with every subsequent request.
+
+### Role enforcement
+
+The `Participante` entity carries a `Rol` field (`ADMIN` or `PARTICIPANTE`). Spring Security exposes this as a granted authority. Controller methods are protected with `@PreAuthorize("hasRole('ADMIN')")` or `@PreAuthorize("hasRole('PARTICIPANTE')")` so the framework rejects unauthorized calls before they reach business logic.
+
+### OpenAPI / Swagger UI
+
+springdoc-openapi generates an OpenAPI 3 specification from the controllers automatically. The interactive Swagger UI is available at:
+
+```
+http://localhost:8080/swagger-ui/index.html
+```
+
+---
+
+## Frontend layer
+
+The frontend is a React single-page application bootstrapped with Vite.
+
+### Routing
+
+React Router v7 handles client-side navigation. The route map:
+
+| Path | View |
+|---|---|
+| `/` | Public homepage — list of published tournaments |
+| `/tournament/:id` | Tournament detail with its competitions |
+| `/login` | Participant login |
+| `/register` | Participant registration |
+| `/inscriptions` | Participant's enrolled competitions |
+| `/profile` | Participant profile and password change |
+| `/admin/login` | Admin login |
+| `/admin/dashboard` | Admin tournament list |
+| `/admin/tournaments/:id/competitions` | Admin competition management |
+| `/admin/accounts` | Admin account management |
+
+### Auth context
+
+`AuthContext` wraps the application and provides the current session state (JWT token and user details) to all child components. On login, the token is stored (typically in `localStorage`) and attached to every Axios request via an interceptor.
+
+### HTTP communication
+
+Axios is used for all API calls. A shared Axios instance is configured with:
+
+- `baseURL` pointing to the backend (`http://localhost:8080`).
+- A request interceptor that injects the `Authorization: Bearer <token>` header from `AuthContext`.
+- A response interceptor that redirects to `/login` on 401 responses.
+
+---
+
+## Database layer
+
+PostgreSQL stores all application data. Hibernate (via Spring Data JPA) manages schema generation and all SQL.
+
+### Inheritance strategies
+
+Two domain hierarchies use JPA inheritance:
+
+| Hierarchy | Strategy | Tables |
+|---|---|---|
+| `EstadoTorneo` | `SINGLE_TABLE` (discriminator `tipo_estado`) | `estadoTorneos` |
+| `EstadoCompetencia` | `SINGLE_TABLE` (discriminator `tipo_estado`) | `estado_competencia` |
+| `Torneo` | `JOINED` | `torneos` + subclass tables |
+
+### Core tables
+
+| Table | Entity | Notes |
+|---|---|---|
+| `torneos` | `Torneo` | Base tournament data |
+| `competencias` | `Competencia` | Linked to a tournament |
+| `participantes` | `Participante` | Unique email constraint |
+| `inscripciones` | `Inscripcion` | Unique `(participante_id, competencia_id)` |
+| `estadoTorneos` | `EstadoTorneo` | State Pattern rows: `PUBLICADO`, `NO_PUBLICADO` |
+| `estado_competencia` | `EstadoCompetencia` | State Pattern rows: `CON_CUPO`, `SIN_CUPO` |
+
+---
+
+## Design patterns
+
+The domain layer uses two classic GoF patterns:
+
+### State pattern — tournament lifecycle
+
+`Torneo` delegates state-sensitive operations (`publicar`, `agregarCompetencia`, `eliminar`, `editar`) to its current `EstadoTorneo` object. Concrete states:
+
+- **`TorneoNoPublicado`** — allows editing, adding competitions, and deletion.
+- **`TorneoPublicado`** — blocks all mutations; the tournament is visible to the public.
+
+### State pattern — competition enrollment
+
+`Competencia` delegates enrollment to its `EstadoCompetencia` object:
+
+- **`CompetenciaConCupo`** — accepts enrollments while spots remain. Throws `IllegalStateException` when the limit is reached.
+- **`CompetenciaSinCupo`** — rejects all enrollment attempts.
+
+The service layer is responsible for transitioning between states using persisted state entities fetched from the repository (not constructed with `new`).

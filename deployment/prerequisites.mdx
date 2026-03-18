@@ -1,0 +1,93 @@
+---
+title: "Prerequisites"
+description: "System requirements before deploying Torneos Gestion."
+---
+
+Before running Torneos Gestion, make sure your system has the following tools installed.
+
+<CardGroup cols={3}>
+  <Card title="Java 17+" icon="coffee">
+    Required to compile and run the Spring Boot backend.
+  </Card>
+  <Card title="Node.js 18+ and npm" icon="node">
+    Required to install dependencies and build the React frontend.
+  </Card>
+  <Card title="PostgreSQL 13+" icon="database">
+    The relational database used by the backend.
+  </Card>
+  <Card title="Maven wrapper" icon="wrench">
+    Included in the repo as `mvnw` — no separate Maven install needed.
+  </Card>
+  <Card title="Git" icon="git-branch">
+    Required to clone the repository.
+  </Card>
+</CardGroup>
+
+## Java 17+
+
+Torneos Gestion requires Java 17 or later. You can download it from [Adoptium](https://adoptium.net/) (Temurin distribution) or use your system package manager.
+
+Verify your installed version:
+
+```bash
+java -version
+```
+
+The output should show `17` or higher.
+
+<Tip>
+  If you need to manage multiple Java versions on the same machine, consider using [SDKMAN](https://sdkman.io/).
+</Tip>
+
+## Maven
+
+The repository includes a Maven wrapper (`mvnw` on Linux/macOS, `mvnw.cmd` on Windows), so you do not need to install Maven separately. The wrapper downloads the correct Maven version automatically on first run.
+
+## Node.js 18+ and npm
+
+The frontend is built with Vite and React. Node.js 18 or later is required.
+
+Verify your installed version:
+
+```bash
+node --version
+npm --version
+```
+
+Download Node.js from [nodejs.org](https://nodejs.org/) or use a version manager like [nvm](https://github.com/nvm-sh/nvm).
+
+## PostgreSQL 13+
+
+Torneos Gestion uses PostgreSQL as its database. Install PostgreSQL 13 or later from [postgresql.org](https://www.postgresql.org/download/).
+
+After installation, create the database:
+
+```sql
+CREATE DATABASE "TorneosGestion";
+```
+
+<Note>
+  The database name is case-sensitive. Use double quotes around `TorneosGestion` exactly as shown.
+</Note>
+
+The default connection details expected by the backend are:
+
+| Setting  | Default value                                       |
+| -------- | --------------------------------------------------- |
+| Host     | `localhost`                                         |
+| Port     | `5432`                                              |
+| Database | `TorneosGestion`                                    |
+| User     | `postgres`                                          |
+| Password | `1508`                                              |
+
+These can all be overridden via environment variables. See [Environment variables](/deployment/environment-variables).
+
+## Git
+
+Git is required to clone the repository:
+
+```bash
+git --version
+```
+
+Download Git from [git-scm.com](https://git-scm.com/).

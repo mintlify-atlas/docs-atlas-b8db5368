@@ -1,0 +1,122 @@
+---
+title: 'Managing tournaments'
+description: 'Create, publish, update, and delete tournaments from the admin dashboard.'
+---
+
+Tournaments are the top-level entities in Torneos Gestion. Each tournament contains one or more competitions that participants can enroll in. All tournament management is done from the **Dashboard** at `/admin/dashboard`.
+
+## View all tournaments
+
+The dashboard loads all tournaments ordered by start date (most recent first) via:
+
+```http
+GET /api/v1/admin/tournaments
+```
+
+Each row in the table shows the tournament name, start date, end date, and publication status (`Publicado` / `No publicado`). From each row you can navigate to the tournament's competitions, publish it, edit it, or delete it.
+
+<Note>
+Only unpublished tournaments show the **Publicar**, **Editar**, and **Eliminar** actions. Published tournaments are locked for editing.
+</Note>
+
+## Create a tournament
+
+<Steps>
+  <Step title="Open the creation form">
+    Click the **+ Nuevo torneo** button in the top-right corner of the dashboard.
+  </Step>
+  <Step title="Fill in the tournament details">
+    Complete all required fields:
+
+    | Field | Required | Notes |
+    |---|---|---|
+    | `name` | Yes | Tournament name |
+    | `description` | Yes | Short description |
+    | `startDate` | Yes | Must be today or in the future (`YYYY-MM-DD`) |
+    | `finishDate` | Yes | Must be after `startDate` |
+
+    The form prevents selecting past start dates and enforces that the end date falls after the start date.
+  </Step>
+  <Step title="Save the tournament">
+    Click **Guardar**. The frontend sends:
+
+    ```http
+    POST /api/v1/admin/tournaments
+    Content-Type: application/json
+
+    {
+      "name": "Torneo Verano 2025",
+      "description": "Torneo anual de verano.",
+      "startDate": "2025-12-01",
+      "finishDate": "2025-12-15"
+    }
+    ```
+
+    The server responds with `201 Created`. The new tournament is created with status **No publicado** (`TorneoNoPublicado`) and appears immediately in the dashboard table.
+  </Step>
+</Steps>
+
+<Note>
+Date validation is enforced on both the frontend and the backend (`@FutureOrPresent`, `@ValidDateRange`). If the dates are invalid, the backend throws `TournamentDateException` and returns an error message.
+</Note>
+
+## Publish a tournament
+
+Publishing makes a tournament visible to participants on the public site. This action is irreversible — once published, the tournament cannot be edited or deleted.
+
+<Steps>
+  <Step title="Locate the tournament">
+    Find the unpublished tournament in the dashboard table. Its status badge reads **No publicado**.
+  </Step>
+  <Step title="Click Publicar">
+    Click the **Publicar** button in the actions column. The frontend sends:
+
+    ```http
+    PATCH /api/v1/admin/tournaments/{tournamentId}/published
+    ```
+
+    The tournament transitions from `TorneoNoPublicado` to `TorneoPublicado`. The status badge updates to **Publicado** and a success toast appears.
+  </Step>
+</Steps>
+
+<Warning>
+Publishing is permanent. Once a tournament is published, you cannot edit its name, dates, or description, and you cannot delete it. Review all details — including competitions — before publishing.
+</Warning>
+
+## Edit a tournament
+
+Editing is only available for unpublished tournaments.
+
+1. Click **Editar** in the actions column of the tournament you want to update.
+2. The same form used for creation opens, pre-filled with the current values.
+3. Modify the fields and click **Guardar**. The frontend sends:
+
+```http
+PUT /api/v1/admin/tournaments/{tournamentId}
+Content-Type: application/json
+
+{
+  "name": "Torneo Verano 2025 — Edición Especial",
+  "description": "Descripción actualizada.",
+  "startDate": "2025-12-05",
+  "finishDate": "2025-12-20"
+}
+```
+
+All fields (`name`, `description`, `startDate`, `finishDate`) are required for an update. The same date validation rules apply.
+
+## Delete a tournament
+
+<Warning>
+Deleting a tournament is permanent and cannot be undone. The **Eliminar** action is only available for unpublished tournaments.
+</Warning>
+
+1. Click **Eliminar** in the actions column of the tournament you want to remove.
+2. A confirmation dialog appears. Click **Eliminar** to confirm.
+3. The frontend sends:
+
+```http
+DELETE /api/v1/admin/tournaments/{tournamentId}
+```
+
+The server responds with `204 No Content` and the tournament is removed from the list.

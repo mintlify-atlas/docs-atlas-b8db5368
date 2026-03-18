@@ -1,0 +1,78 @@
+---
+title: "Frontend deployment"
+description: "Run and build the React frontend."
+---
+
+The frontend is a React application built with [Vite](https://vite.dev/). In development, it runs on port `5173` and proxies API requests to the backend automatically.
+
+<Steps>
+  <Step title="Navigate to the frontend directory">
+    ```bash
+    cd frontend
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    ```bash
+    npm install
+    ```
+
+    This installs all packages listed in `package.json`, including React 19, React Router, Axios, Bootstrap, and Framer Motion.
+  </Step>
+
+  <Step title="Start the development server">
+    ```bash
+    npm run dev
+    ```
+
+    Vite starts a local server at `http://localhost:5173`.
+
+    All requests with a path starting with `/api` are automatically proxied to `http://localhost:8080` by the Vite dev server, as configured in `vite.config.js`:
+
+    ```javascript
+    server: {
+      proxy: {
+        '/api': 'http://localhost:8080'
+      }
+    }
+    ```
+
+    This means the frontend's Axios instance — configured with `baseURL: '/api/v1'` — works without CORS issues during development.
+  </Step>
+
+  <Step title="Build for production">
+    ```bash
+    npm run build
+    ```
+
+    Vite compiles and bundles the application into the `dist/` directory. You can serve this directory with any static file host (Nginx, Caddy, a CDN, etc.).
+
+    <Note>
+      In production, the Vite proxy is not available. If the frontend and backend are served from different origins, configure the backend URL directly. Update the `baseURL` in `src/api/axiosConfig.js` to point to your production backend:
+
+      ```javascript
+      const api = axios.create({
+          baseURL: 'https://your-backend-host/api/v1',
+      });
+      ```
+    </Note>
+  </Step>
+
+  <Step title="Preview the production build locally">
+    To test the production build before deploying:
+
+    ```bash
+    npm run preview
+    ```
+
+    Vite serves the `dist/` directory locally so you can verify the build output.
+  </Step>
+</Steps>
+
+## API communication
+
+The frontend uses Axios with a shared instance defined in `src/api/axiosConfig.js`. Key behaviors:
+
+- **Base URL**: `/api/v1` — relative, so it resolves against whatever host serves the frontend.
+- **Authentication**: The JWT token is read from `localStorage` on every request and attached as the `Authorization` header.
+- **Session expiry**: If the server responds with `401` or `403`, the token and user data are cleared from `localStorage` and the user is redirected to the appropriate login page.

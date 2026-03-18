@@ -1,0 +1,131 @@
+---
+title: "Managing your profile"
+description: "View and update your participant profile and change your password."
+---
+
+The profile page is available at `/profile` when you are logged in as a **PARTICIPANTE**. It lets you view your account information, update your personal details, and change your password.
+
+## What you can see
+
+The profile page header displays your full name (as an avatar with initials) and your email address.
+
+Below the header, a summary row shows:
+
+| Section | Description |
+|---|---|
+| **Inscripciones** | Total number of competitions you are enrolled in. |
+| **Documento** | Your document type and document number (e.g., `DNI · 12345678`). |
+| **Miembro desde** | The date your account was created. |
+
+The **Datos personales** section shows your current first name, last name, and email address.
+
+The **Inscripciones recientes** section shows your three most recent enrollments. Each entry displays the tournament name, competition name, and final price. Click **Ver todas →** to go to the full `/inscriptions` page.
+
+<Info>
+  Document type and document number are read-only and cannot be changed after registration.
+</Info>
+
+## Updating your personal details
+
+You can update your first name and last name. Email is shown but cannot be changed through the profile form.
+
+<Steps>
+  <Step title="Open the profile page">
+    Navigate to `/profile`. The page loads your current data from:
+
+    ```http
+    GET /api/v1/participantes/me
+    ```
+  </Step>
+
+  <Step title="Click Editar">
+    In the **Datos personales** section, click the **Editar** button in the top-right corner. The read-only view is replaced by an editable form with **Nombre** and **Apellido** fields pre-filled with your current values.
+  </Step>
+
+  <Step title="Update your name or surname">
+    Edit the **Nombre** and/or **Apellido** fields. Both fields accept letters only (including Spanish accented characters) and must be between 3 and 50 characters.
+  </Step>
+
+  <Step title="Save your changes">
+    Click **Guardar cambios**. The button shows a spinner and the label **Guardando...** while the request is in progress.
+
+    The API call made is:
+
+    ```http
+    PUT /api/v1/participantes/me
+    ```
+
+    ```json
+    {
+      "firstName": "Juan",
+      "lastName": "García"
+    }
+    ```
+
+    On success, a toast notification confirms **Perfil actualizado correctamente.** and the form returns to read-only view with the updated values.
+
+    If the update fails, a toast notification displays the server error message.
+  </Step>
+
+  <Step title="Cancel without saving">
+    Click **Cancelar** at any time to discard your changes and return to the read-only view.
+  </Step>
+</Steps>
+
+## Changing your password
+
+<Steps>
+  <Step title="Locate the password section">
+    Scroll to the **Cambiar contraseña** section on the `/profile` page.
+  </Step>
+
+  <Step title="Enter your current password">
+    Type your existing password in the **Contraseña actual** field. This is required to verify your identity before the change is accepted.
+  </Step>
+
+  <Step title="Enter and confirm your new password">
+    Type your new password in the **Nueva contraseña** field. A strength indicator is displayed below the field.
+
+    Retype the new password in the **Confirmar nueva contraseña** field.
+
+    <Warning>
+      The new password must be at least 8 characters. If the two new password fields do not match, an error is shown and the request is not sent.
+    </Warning>
+  </Step>
+
+  <Step title="Submit">
+    Click **Cambiar contraseña**. The button shows a spinner and the label **Cambiando...** while the request is in progress.
+
+    The API call made is:
+
+    ```http
+    PATCH /api/v1/participantes/me/password
+    ```
+
+    ```json
+    {
+      "currentPassword": "oldpassword",
+      "newPassword": "newpassword"
+    }
+    ```
+
+    On success, a toast notification confirms **Contraseña cambiada correctamente.** and all three password fields are cleared.
+
+    If the current password is incorrect, the server returns an error message displayed in a red alert above the form.
+  </Step>
+</Steps>
+
+## Profile response fields
+
+The `GET /api/v1/participantes/me` endpoint returns:
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | `Long` | Your participant account ID. |
+| `firstName` | `String` | Your first name. |
+| `lastName` | `String` | Your last name. |
+| `email` | `String` | Your email address. |
+| `documentType` | `String` | Your document type (e.g., `DNI`). |
+| `documentNumber` | `String` | Your document number. |
+| `totalInscripciones` | `int` | Total number of your enrollments. |
+| `createdAt` | `LocalDateTime` | Account creation timestamp. |

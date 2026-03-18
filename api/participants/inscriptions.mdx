@@ -1,0 +1,177 @@
+---
+title: "Participant inscriptions"
+description: "List your competition enrollments — requires PARTICIPANTE JWT."
+---
+
+<Note>
+  All endpoints on this page require a valid **PARTICIPANTE** JWT. Pass it as `Authorization: Bearer <token>`. Results are scoped to the authenticated participant — you can only view your own inscriptions.
+</Note>
+
+---
+
+## List all inscriptions
+
+```
+GET /api/v1/inscriptions
+```
+
+Returns all competition inscriptions for the authenticated participant.
+
+### Response — `200 OK`
+
+Returns an array of `ParticipantInscriptionResponseDTO` objects.
+
+<ResponseField name="inscripcionId" type="integer">
+  Unique identifier of the inscription.
+</ResponseField>
+
+<ResponseField name="fechaInscripcion" type="string">
+  Date the inscription was created.
+</ResponseField>
+
+<ResponseField name="precioFinal" type="number">
+  Final price paid for this inscription.
+</ResponseField>
+
+<ResponseField name="torneoId" type="integer">
+  ID of the tournament this inscription belongs to.
+</ResponseField>
+
+<ResponseField name="torneoNombre" type="string">
+  Name of the tournament.
+</ResponseField>
+
+<ResponseField name="competenciaId" type="integer">
+  ID of the competition the participant enrolled in.
+</ResponseField>
+
+<ResponseField name="competenciaNombre" type="string">
+  Name of the competition.
+</ResponseField>
+
+### Example
+
+```bash
+curl -X GET http://localhost:8080/api/v1/inscriptions \
+  -H "Authorization: Bearer <token>"
+```
+
+```json
+[
+  {
+    "inscripcionId": 42,
+    "fechaInscripcion": "2026-03-18",
+    "precioFinal": 500.0,
+    "torneoId": 1,
+    "torneoNombre": "Torneo Nacional 2026",
+    "competenciaId": 3,
+    "competenciaNombre": "100m Llanos"
+  },
+  {
+    "inscripcionId": 55,
+    "fechaInscripcion": "2026-03-20",
+    "precioFinal": 350.0,
+    "torneoId": 1,
+    "torneoNombre": "Torneo Nacional 2026",
+    "competenciaId": 4,
+    "competenciaNombre": "Salto en Alto"
+  }
+]
+```
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `401`  | Missing or invalid JWT. |
+| `403`  | Authenticated user does not have the PARTICIPANTE role. |
+
+---
+
+## Get a single inscription
+
+```
+GET /api/v1/inscriptions/{id}
+```
+
+Returns the full details of a single inscription, including tournament dates and description. The inscription must belong to the authenticated participant.
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The ID of the inscription to retrieve.
+</ParamField>
+
+### Response — `200 OK`
+
+Returns a `ParticipantSingleInscriptionResponseDTO` object.
+
+<ResponseField name="inscripcionId" type="integer">
+  Unique identifier of the inscription.
+</ResponseField>
+
+<ResponseField name="fechaInscripcion" type="string">
+  Date the inscription was created.
+</ResponseField>
+
+<ResponseField name="precioFinal" type="number">
+  Final price paid for this inscription.
+</ResponseField>
+
+<ResponseField name="competenciaId" type="integer">
+  ID of the competition.
+</ResponseField>
+
+<ResponseField name="competenciaNombre" type="string">
+  Name of the competition.
+</ResponseField>
+
+<ResponseField name="torneoId" type="integer">
+  ID of the tournament.
+</ResponseField>
+
+<ResponseField name="torneoNombre" type="string">
+  Name of the tournament.
+</ResponseField>
+
+<ResponseField name="torneoDescripcion" type="string">
+  Description of the tournament.
+</ResponseField>
+
+<ResponseField name="torneoFechaInicio" type="string">
+  Tournament start date.
+</ResponseField>
+
+<ResponseField name="torneoFechaFin" type="string">
+  Tournament end date.
+</ResponseField>
+
+### Example
+
+```bash
+curl -X GET http://localhost:8080/api/v1/inscriptions/42 \
+  -H "Authorization: Bearer <token>"
+```
+
+```json
+{
+  "inscripcionId": 42,
+  "fechaInscripcion": "2026-03-18",
+  "precioFinal": 500.0,
+  "competenciaId": 3,
+  "competenciaNombre": "100m Llanos",
+  "torneoId": 1,
+  "torneoNombre": "Torneo Nacional 2026",
+  "torneoDescripcion": "El torneo más grande del año.",
+  "torneoFechaInicio": "2026-04-01",
+  "torneoFechaFin": "2026-04-10"
+}
+```
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `401`  | Missing or invalid JWT. |
+| `403`  | Authenticated user does not have the PARTICIPANTE role. |
+| `404`  | Inscription not found, or it does not belong to the authenticated participant. |

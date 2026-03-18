@@ -1,0 +1,80 @@
+---
+title: "Browsing tournaments"
+description: "Explore published tournaments and their competitions without logging in."
+---
+
+All published tournaments and their competitions are publicly visible. No account or login is required to browse.
+
+## Browsing flow
+
+<Steps>
+  <Step title="Visit the home page">
+    Navigate to `/`. The **Torneos Deportivos** page loads and fetches all published tournaments from `GET /api/v1/tournaments`.
+
+    Each tournament is displayed as a card showing:
+
+    - Tournament name and description
+    - A status badge: **Próximo** (upcoming), **En curso** (active), or **Finalizado** (finished), derived from the start and end dates
+    - Start date and end date
+    - Number of competitions (`cantidadCompetencias`)
+
+    <Info>
+      Tournament card images are selected automatically based on keywords in the tournament name and description (football, tennis, basketball, swimming, volleyball). A default image is used when no keyword matches.
+    </Info>
+  </Step>
+
+  <Step title="Filter and search">
+    Use the search and filter bar above the tournament grid to narrow down results:
+
+    - **Buscar torneo** — filters by tournament name or description (case-insensitive, substring match)
+    - **Estado** — filter buttons: **Todos**, **Próximos**, **En curso**, **Finalizados**
+
+    The result count updates in real time. Click **Limpiar** to reset all filters.
+  </Step>
+
+  <Step title="Open a tournament">
+    Click **Ver competencias →** on any tournament card to navigate to `/tournament/:id`.
+
+    The tournament detail page shows:
+
+    - A hero image with the tournament name and description
+    - A summary row with **Fecha de inicio**, **Fecha de fin**, and total **Competencias** count
+    - A grid of competition cards under the heading **Competencias disponibles**
+  </Step>
+
+  <Step title="Browse competitions">
+    Each competition card on the tournament page displays:
+
+    - Competition name
+    - A status badge: **Lugares disponibles** (capacity available, `CON_CUPO`) or **Sin cupo** (at capacity, `SIN_CUPO`)
+    - Base price (`precioBase`)
+    - Participant capacity (`cupo`)
+
+    <Note>
+      Competitions with state `SIN_CUPO` show a disabled **Sin cupo disponible** button. You cannot enroll in a full competition.
+    </Note>
+
+    If you are not logged in, the enroll button shows **Iniciá sesión para inscribirte** and redirects you to `/login` when clicked. A notice at the bottom of the page also links to `/login` and `/register`.
+  </Step>
+
+  <Step title="View competition detail (optional)">
+    The route `/tournament/:tournamentId/competitions/:id` exists but currently redirects back to the tournament page with the message: "Use the tournament page to view and enroll in competitions." All enrollment actions take place directly on the tournament page.
+  </Step>
+</Steps>
+
+## Competition capacity
+
+Competitions are one of two types:
+
+<CardGroup cols={2}>
+  <Card title="Capped (CON_CUPO)" icon="users">
+    Has a defined `cupo` (participant limit). Enrollment is open while spots remain. The badge turns red and the enroll button is disabled when the competition fills up.
+  </Card>
+  <Card title="Full (SIN_CUPO)" icon="ban">
+    All spots are taken. The competition badge shows **Sin cupo** in red. Enrollment is blocked for all participants.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Check back later if a competition you want is full — cancellations may free up spots.
+</Tip>

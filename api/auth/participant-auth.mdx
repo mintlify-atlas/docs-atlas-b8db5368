@@ -1,0 +1,148 @@
+---
+title: "Participant authentication"
+description: "Register and log in as a participant to obtain a JWT token."
+---
+
+## Register a new participant
+
+<Note>
+  This endpoint creates a new participant account. The account is immediately active and can be used to authenticate.
+</Note>
+
+**`POST /api/v1/account`**
+
+### Request body
+
+<ParamField body="email" type="string" required>
+  A valid, unique email address. Used as the login identifier.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  Account password. Must be at least 8 characters long.
+</ParamField>
+
+<ParamField body="firstName" type="string" required>
+  Participant's first name. Between 3 and 50 characters. Letters only (including accented characters).
+</ParamField>
+
+<ParamField body="lastName" type="string" required>
+  Participant's last name. Between 3 and 50 characters. Letters only (including accented characters).
+</ParamField>
+
+<ParamField body="documentType" type="string" required>
+  Type of identity document. One of: `DNI`, `PASAPORTE`, `CUIL`, `OTRO`.
+</ParamField>
+
+<ParamField body="documentNumber" type="string" required>
+  Document number corresponding to the selected `documentType`. Format is validated based on the document type.
+</ParamField>
+
+### Response
+
+**`201 Created`** — No response body. The account has been created successfully.
+
+### Errors
+
+| Status | Reason |
+|--------|--------|
+| `400 Bad Request` | Validation failed — one or more fields are missing or invalid. |
+| `409 Conflict` | The email address is already registered (`ParticipanteAlreadyExistsException`). |
+
+### Example
+
+```bash
+curl -X POST http://localhost:8080/api/v1/account \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "juan.perez@example.com",
+    "password": "securePass1",
+    "firstName": "Juan",
+    "lastName": "Perez",
+    "documentType": "DNI",
+    "documentNumber": "12345678"
+  }'
+```
+
+---
+
+## Participant login
+
+**`POST /api/v1/auth`**
+
+Authenticates a participant and returns a signed JWT token. This token must be included in all requests to protected endpoints.
+
+<Warning>
+  This endpoint rejects accounts that have the `ADMIN` role. Administrators must use [`POST /api/v1/admin/auth`](/api/auth/admin-auth) instead.
+</Warning>
+
+### Request body
+
+<ParamField body="email" type="string" required>
+  The email address used during registration.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  The account password.
+</ParamField>
+
+### Response
+
+**`200 OK`**
+
+<ResponseField name="id" type="number">
+  Internal identifier of the participant account.
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  Email address of the authenticated participant.
+</ResponseField>
+
+<ResponseField name="rol" type="string">
+  Role assigned to the account. Will be `PARTICIPANTE` for participants.
+</ResponseField>
+
+<ResponseField name="token" type="string">
+  Signed JWT token. Include this value in the `Authorization` header for protected requests.
+</ResponseField>
+
+<ResponseField name="expiresAt" type="number">
+  Unix timestamp (milliseconds) indicating when the token expires.
+</ResponseField>
+
+### Errors
+
+| Status | Reason |
+|--------|--------|
+| `401 Unauthorized` | Email not found or password is incorrect (`BadCredentialsException`). |
+| `401 Unauthorized` | The account exists but has the `ADMIN` role (`UnauthorizedRoleException`). |
+
+### Using the token
+
+Include the token in the `Authorization` header of every authenticated request:
+
+```
+Authorization: Bearer <token>
+```
+
+### Example
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "juan.perez@example.com",
+    "password": "securePass1"
+  }'
+```
+
+**Response:**
+
+```json
+{
+  "id": 42,
+  "email": "juan.perez@example.com",
+  "rol": "PARTICIPANTE",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expiresAt": 1742000000000
+}
+```

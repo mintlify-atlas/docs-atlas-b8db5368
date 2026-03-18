@@ -1,0 +1,278 @@
+---
+title: "Public tournament endpoints"
+description: "Browse published tournaments and their competitions — no authentication required."
+---
+
+<Note>
+  All endpoints on this page are publicly accessible. No `Authorization` header is needed unless stated otherwise.
+</Note>
+
+---
+
+## List all published tournaments
+
+**`GET /api/v1/tournaments`**
+
+Returns a list of all tournaments that have been published by an administrator. Unpublished tournaments are not included.
+
+### Response
+
+**`200 OK`** — Array of tournament objects.
+
+<ResponseField name="id" type="number">
+  Unique identifier of the tournament.
+</ResponseField>
+
+<ResponseField name="nombre" type="string">
+  Name of the tournament.
+</ResponseField>
+
+<ResponseField name="descripcion" type="string">
+  Description of the tournament.
+</ResponseField>
+
+<ResponseField name="fechaInicio" type="string">
+  Start date in `YYYY-MM-DD` format.
+</ResponseField>
+
+<ResponseField name="fechaFin" type="string">
+  End date in `YYYY-MM-DD` format.
+</ResponseField>
+
+<ResponseField name="estado" type="string">
+  Current status of the tournament.
+</ResponseField>
+
+<ResponseField name="cantidadCompetencias" type="number">
+  Number of competitions within this tournament.
+</ResponseField>
+
+### Example
+
+```bash
+curl http://localhost:8080/api/v1/tournaments
+```
+
+**Response:**
+
+```json
+[
+  {
+    "id": 1,
+    "nombre": "Torneo de Verano 2025",
+    "descripcion": "Torneo anual de verano.",
+    "fechaInicio": "2025-12-01",
+    "fechaFin": "2025-12-15",
+    "estado": "PUBLICADO",
+    "cantidadCompetencias": 3
+  }
+]
+```
+
+---
+
+## Get a single published tournament
+
+**`GET /api/v1/tournament/{tournamentId}`**
+
+Returns the details of a single published tournament.
+
+### Path parameters
+
+<ParamField path="tournamentId" type="number" required>
+  The unique identifier (`id`) of the tournament.
+</ParamField>
+
+### Response
+
+**`200 OK`** — A single tournament object (same fields as the list endpoint above).
+
+### Errors
+
+| Status | Reason |
+|--------|--------|
+| `404 Not Found` | Tournament does not exist or has not been published (`TorneoNotFoundException`). |
+
+### Example
+
+```bash
+curl http://localhost:8080/api/v1/tournament/1
+```
+
+---
+
+## List competitions of a tournament
+
+**`GET /api/v1/tournament/{tournamentId}/competitions`**
+
+Returns all competitions belonging to a published tournament.
+
+### Path parameters
+
+<ParamField path="tournamentId" type="number" required>
+  The unique identifier of the tournament.
+</ParamField>
+
+### Response
+
+**`200 OK`** — Array of competition objects.
+
+<ResponseField name="id" type="number">
+  Unique identifier of the competition.
+</ResponseField>
+
+<ResponseField name="nombre" type="string">
+  Name of the competition.
+</ResponseField>
+
+<ResponseField name="precioBase" type="number">
+  Base registration price for the competition.
+</ResponseField>
+
+<ResponseField name="cupo" type="number">
+  Maximum number of participants allowed.
+</ResponseField>
+
+<ResponseField name="estado" type="string">
+  Availability status. Either `CON_CUPO` (spots available) or `SIN_CUPO` (at capacity).
+</ResponseField>
+
+### Errors
+
+| Status | Reason |
+|--------|--------|
+| `404 Not Found` | The tournament does not exist or is not published. |
+
+### Example
+
+```bash
+curl http://localhost:8080/api/v1/tournament/1/competitions
+```
+
+**Response:**
+
+```json
+[
+  {
+    "id": 10,
+    "nombre": "100m Llanos",
+    "precioBase": 500.0,
+    "cupo": 20,
+    "estado": "CON_CUPO"
+  }
+]
+```
+
+---
+
+## Get a single competition
+
+**`GET /api/v1/tournament/{tournamentId}/competitions/{competitionId}`**
+
+Returns the details of a single competition within a published tournament.
+
+### Path parameters
+
+<ParamField path="tournamentId" type="number" required>
+  The unique identifier of the tournament.
+</ParamField>
+
+<ParamField path="competitionId" type="number" required>
+  The unique identifier of the competition.
+</ParamField>
+
+### Response
+
+**`200 OK`** — A single competition object (same fields as the list endpoint above).
+
+### Errors
+
+| Status | Reason |
+|--------|--------|
+| `404 Not Found` | The tournament is not published, or the competition does not exist within it (`CompetenciaNotFoundException`). |
+
+### Example
+
+```bash
+curl http://localhost:8080/api/v1/tournament/1/competitions/10
+```
+
+---
+
+## Enroll in a competition
+
+**`POST /api/v1/tournament/{tournamentId}/competitions/{competitionId}/inscription`**
+
+Enrolls the authenticated participant in the specified competition. The participant is identified from the JWT token — no request body is required.
+
+<Note>
+  This endpoint requires authentication. Include a valid participant JWT in the `Authorization` header.
+</Note>
+
+### Path parameters
+
+<ParamField path="tournamentId" type="number" required>
+  The unique identifier of the tournament.
+</ParamField>
+
+<ParamField path="competitionId" type="number" required>
+  The unique identifier of the competition to enroll in.
+</ParamField>
+
+### Response
+
+**`201 Created`**
+
+<ResponseField name="id" type="number">
+  Unique identifier of the inscription record.
+</ResponseField>
+
+<ResponseField name="participanteId" type="number">
+  Internal ID of the enrolled participant.
+</ResponseField>
+
+<ResponseField name="participanteEmail" type="string">
+  Email address of the enrolled participant.
+</ResponseField>
+
+<ResponseField name="participanteNombre" type="string">
+  Full name of the enrolled participant.
+</ResponseField>
+
+<ResponseField name="precioFinal" type="number">
+  Final price charged for this inscription.
+</ResponseField>
+
+<ResponseField name="fechaInscripcion" type="string">
+  Date the inscription was created, in `YYYY-MM-DD` format.
+</ResponseField>
+
+### Errors
+
+| Status | Reason |
+|--------|--------|
+| `401 Unauthorized` | No valid JWT token provided. |
+| `403 Forbidden` | The token belongs to an `ADMIN` account — only `PARTICIPANTE` accounts can enroll. |
+| `409 Conflict` | The participant is already enrolled in this competition (`InscripcionAlreadyExistsException`). |
+| `400 Bad Request` | The competition has no available spots (`NoCupoException`). |
+| `404 Not Found` | Tournament not published, or competition not found. |
+
+### Example
+
+```bash
+curl -X POST http://localhost:8080/api/v1/tournament/1/competitions/10/inscription \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+**Response:**
+
+```json
+{
+  "id": 201,
+  "participanteId": 42,
+  "participanteEmail": "juan.perez@example.com",
+  "participanteNombre": "Juan Perez",
+  "precioFinal": 500.0,
+  "fechaInscripcion": "2025-11-10"
+}
+```

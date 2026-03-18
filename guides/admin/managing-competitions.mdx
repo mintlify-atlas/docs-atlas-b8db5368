@@ -1,0 +1,138 @@
+---
+title: 'Managing competitions'
+description: 'Add and manage competitions within a tournament.'
+---
+
+Competitions belong to a tournament and define the categories participants can enroll in. Each competition has a name, a base price, a capacity (cupo), and an enrollment list.
+
+<Note>
+Competitions can only be created, edited, or deleted while the parent tournament is **unpublished**. Once a tournament is published, its competitions are locked.
+</Note>
+
+## Navigate to a tournament's competitions
+
+From the dashboard at `/admin/dashboard`, click the **Competencias** button in the actions column of any tournament. This navigates to `/admin/tournaments/{tournamentId}/competitions`.
+
+The page displays:
+- A summary bar with the total number of competitions, total enrollments, and total revenue collected.
+- The tournament's publication status.
+- A table of all competitions.
+
+## Create a competition
+
+<Steps>
+  <Step title="Open the creation form">
+    On the competitions page for an unpublished tournament, click **+ Nueva competencia**.
+  </Step>
+  <Step title="Fill in the competition details">
+    Complete all required fields:
+
+    | Field | Required | Notes |
+    |---|---|---|
+    | `name` | Yes | Competition name (e.g., `Masculino amateur`) |
+    | `cupo` | Yes | Capacity limit — must be at least 1 |
+    | `precio` | Yes | Base registration price — must be ≥ 0 |
+
+    The capacity value determines the competition type on the backend:
+    - **`cupo` ≥ 1** → `CompetenciaConCupo` (enrollment closes when capacity is reached)
+    - **`cupo` = 0 or omitted** → `CompetenciaSinCupo` (unlimited enrollment)
+
+    <Info>
+    The current frontend form requires `cupo` to be at least 1. If you need unlimited enrollment, set a very high value or contact your backend team to adjust the business logic.
+    </Info>
+  </Step>
+  <Step title="Save the competition">
+    Click **Guardar**. The frontend sends:
+
+    ```http
+    POST /api/v1/admin/tournaments/{tournamentId}/competitions
+    Content-Type: application/json
+
+    {
+      "name": "Masculino amateur",
+      "cupo": 20,
+      "precio": 5000
+    }
+    ```
+
+    The server responds with `201 Created` and the new competition appears in the table immediately.
+  </Step>
+</Steps>
+
+## View competition details
+
+The competitions table shows a summary row for each competition:
+
+| Column | Description |
+|---|---|
+| NOMBRE | Competition name |
+| PRECIO | Base registration price |
+| CUPO | Capacity limit |
+| INSCRIPTOS | Number of current enrollments |
+| RECAUDADO | Total revenue from enrollments |
+| ESTADO | `Con cupo` (has capacity) or `Sin cupo` (unlimited) |
+
+To fetch full details for a single competition directly via the API:
+
+```http
+GET /api/v1/admin/tournaments/{tournamentId}/competitions/{competitionId}
+```
+
+## Update a competition
+
+Editing is only available while the parent tournament is unpublished.
+
+1. Click **Editar** in the actions column of the competition.
+2. The form opens pre-filled with the current values.
+3. Update the fields and click **Guardar**. The frontend sends:
+
+```http
+PUT /api/v1/admin/tournaments/{tournamentId}/competitions/{competitionId}
+Content-Type: application/json
+
+{
+  "name": "Masculino amateur",
+  "cupo": 30,
+  "precio": 4500
+}
+```
+
+All three fields (`name`, `cupo`, `precio`) are required for an update.
+
+## Delete a competition
+
+<Warning>
+Deleting a competition is permanent and cannot be undone. This action is only available while the parent tournament is unpublished.
+</Warning>
+
+1. Click **Eliminar** in the actions column of the competition.
+2. Confirm the action in the dialog that appears.
+3. The frontend sends:
+
+```http
+DELETE /api/v1/admin/tournaments/{tournamentId}/competitions/{competitionId}
+```
+
+The server responds with `204 No Content`.
+
+## View enrollments (inscriptions)
+
+You can view the full list of participants enrolled in any competition at any time, regardless of whether the tournament is published.
+
+Click the **Inscriptos** button in the actions column of a competition. A modal opens showing a table with:
+
+| Column | Description |
+|---|---|
+| # | Position in the enrollment list |
+| NOMBRE | Participant full name |
+| EMAIL | Participant email address |
+| PRECIO FINAL | Final price paid at enrollment |
+| FECHA | Enrollment date |
+
+The data is fetched from:
+
+```http
+GET /api/v1/admin/tournaments/{tournamentId}/competitions/{competitionId}/inscriptions
+```
+
+The response is a list of inscription objects. An empty enrollment list is shown if no participants have registered yet.

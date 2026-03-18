@@ -1,0 +1,90 @@
+---
+title: "Admin authentication"
+description: "Log in as an administrator to obtain a JWT token with ADMIN privileges."
+---
+
+## Admin login
+
+**`POST /api/v1/admin/auth`**
+
+Authenticates an administrator account and returns a signed JWT token. This is a separate endpoint from participant authentication — only accounts with the `ADMIN` role are accepted.
+
+<Note>
+  All admin-only endpoints require the token returned by this endpoint in the `Authorization: Bearer <token>` header.
+</Note>
+
+<Warning>
+  The API is seeded with a default administrator account (`admin@localhost` / `admin123`). **Change these credentials before deploying to any environment accessible from outside your local machine.**
+</Warning>
+
+### Request body
+
+<ParamField body="email" type="string" required>
+  Email address of the administrator account.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  Password of the administrator account.
+</ParamField>
+
+### Response
+
+**`200 OK`**
+
+<ResponseField name="id" type="number">
+  Internal identifier of the admin account.
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  Email address of the authenticated administrator.
+</ResponseField>
+
+<ResponseField name="rol" type="string">
+  Role assigned to the account. Will be `ADMIN`.
+</ResponseField>
+
+<ResponseField name="token" type="string">
+  Signed JWT token with `ADMIN` privileges. Use this value in the `Authorization` header for all admin endpoints.
+</ResponseField>
+
+<ResponseField name="expiresAt" type="number">
+  Unix timestamp (milliseconds) indicating when the token expires.
+</ResponseField>
+
+### Errors
+
+| Status | Reason |
+|--------|--------|
+| `401 Unauthorized` | Email not found or password is incorrect (`BadCredentialsException`). |
+| `401 Unauthorized` | The account exists but does not have the `ADMIN` role (`UnauthorizedRoleException`). |
+
+### Using the token
+
+Include the returned token in every admin request:
+
+```
+Authorization: Bearer <token>
+```
+
+### Example
+
+```bash
+curl -X POST http://localhost:8080/api/v1/admin/auth \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@localhost",
+    "password": "admin123"
+  }'
+```
+
+**Response:**
+
+```json
+{
+  "id": 1,
+  "email": "admin@localhost",
+  "rol": "ADMIN",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expiresAt": 1742000000000
+}
+```

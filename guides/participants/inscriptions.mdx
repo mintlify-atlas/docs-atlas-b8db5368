@@ -1,0 +1,101 @@
+---
+title: "Enrolling in competitions"
+description: "How to enroll in a competition and manage your inscriptions."
+---
+
+To enroll in a competition you must be logged in with a **PARTICIPANTE** account. If you do not have one yet, see [Registration](/guides/participants/registration).
+
+## Enrolling in a competition
+
+<Steps>
+  <Step title="Log in">
+    Go to `/login` and enter your email and password. After a successful login you are redirected to the home page (`/`).
+  </Step>
+
+  <Step title="Find a tournament">
+    On the home page, browse or search for the tournament you want to join. Use the status filter to find **Próximos** or **En curso** tournaments. Click **Ver competencias →** to open the tournament.
+  </Step>
+
+  <Step title="Select a competition">
+    On the tournament page (`/tournament/:id`), review the available competition cards. Each card shows the competition name, price, capacity, and availability status.
+
+    <Warning>
+      You can only enroll in competitions that show the **Lugares disponibles** badge. Competitions with **Sin cupo** are full and enrollment is disabled.
+    </Warning>
+  </Step>
+
+  <Step title="Click Inscribirme">
+    Click the **Inscribirme** button on the competition card. The button shows a spinner and the label **Inscribiendo...** while the request is in progress.
+
+    The API call made is:
+
+    ```http
+    POST /api/v1/tournament/{tournamentId}/competitions/{competitionId}/inscription
+    ```
+
+    No request body is required. Your identity is determined from the JWT token in the request header.
+  </Step>
+
+  <Step title="Confirm success">
+    On success, the button turns green and shows **✓ Inscripto**. It is then disabled — you cannot enroll in the same competition twice.
+
+    If an error occurs, an alert is displayed on the competition card with the server's error message.
+  </Step>
+</Steps>
+
+## Enrollment errors
+
+| Error | Cause |
+|---|---|
+| Already enrolled | You are already enrolled in this competition. The server rejects duplicate inscriptions. |
+| Competition at capacity | The competition has no remaining spots (`NoCupoException`). The enrollment is rejected even if the card was shown as available when you loaded the page. |
+| Not authenticated | You are not logged in. You will be redirected to `/login`. |
+
+## Viewing your inscriptions
+
+Access your full enrollment history at `/inscriptions` (linked from the navigation menu as **Mis inscripciones**).
+
+The page loads your inscriptions from:
+
+```http
+GET /api/v1/inscriptions
+```
+
+The page shows:
+
+- A summary row with the **total number of inscriptions** and the **total amount spent** (sum of all `precioFinal` values)
+- A table listing each inscription with: tournament name, competition name, inscription date, and final price
+
+### Viewing inscription detail
+
+Click **Ver detalle ▼** on any row to expand an inline detail panel. The panel fetches:
+
+```http
+GET /api/v1/inscriptions/{inscripcionId}
+```
+
+The detail panel shows:
+
+- Tournament description
+- Tournament start date
+- Tournament end date
+
+Click **Cerrar ▲** to collapse the panel. Only one detail panel can be open at a time.
+
+<Note>
+  If you have no inscriptions yet, the page shows a prompt with a link to **Ver torneos disponibles** that takes you back to the home page.
+</Note>
+
+## Inscription data model
+
+Each inscription returned by the API contains:
+
+| Field | Type | Description |
+|---|---|---|
+| `inscripcionId` | `Long` | Unique identifier for the inscription. |
+| `fechaInscripcion` | `String` | Date the inscription was created (`YYYY-MM-DD`). |
+| `precioFinal` | `double` | Price paid at the time of enrollment. |
+| `torneoId` | `Long` | ID of the parent tournament. |
+| `torneoNombre` | `String` | Name of the parent tournament. |
+| `competenciaId` | `Long` | ID of the competition. |
+| `competenciaNombre` | `String` | Name of the competition. |

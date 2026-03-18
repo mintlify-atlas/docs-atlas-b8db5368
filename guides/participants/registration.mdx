@@ -1,0 +1,84 @@
+---
+title: "Registration"
+description: "Create a participant account to enroll in tournaments."
+---
+
+Any visitor can create a participant account for free. Registration requires no prior login — navigate directly to `/register` from the home page or from the login page.
+
+## Registration flow
+
+<Steps>
+  <Step title="Open the registration page">
+    Go to `/register`. You will see the **Crear cuenta** form. If you already have an account, click **Iniciá sesión** to go to the login page instead.
+  </Step>
+
+  <Step title="Fill in your personal details">
+    Complete the following fields:
+
+    | Field | Description |
+    |---|---|
+    | **Nombre** | Your first name. Letters only (including accented characters), 3–50 characters. |
+    | **Apellido** | Your last name. Letters only (including accented characters), 3–50 characters. |
+    | **Email** | A valid email address. Used to log in and for all account communications. |
+    | **Contraseña** | Your password. Minimum 8 characters. A strength indicator displays below the field as you type. |
+  </Step>
+
+  <Step title="Select your document type and enter your document number">
+    Choose one of the following document types from the **Tipo de documento** dropdown:
+
+    | Value | Format | Example |
+    |---|---|---|
+    | `DNI` | 7 or 8 digits | `12345678` |
+    | `CUIL` | 11 digits | `20123456789` |
+    | `PASAPORTE` | 3 letters followed by 6 digits | `AAB123456` |
+    | `OTRO` | Any value | — |
+
+    The placeholder text in the **Número de documento** field updates dynamically to show the expected format for the selected type.
+
+    <Note>
+      The document number format is validated both in the browser and on the server before your account is created.
+    </Note>
+  </Step>
+
+  <Step title="Submit the form">
+    Click **Crear cuenta**. The button shows a spinner and the label **Registrando...** while the request is in progress.
+
+    On success, you are redirected to `/login` automatically.
+
+    If the server returns an error (for example, because the email is already registered), an alert is displayed at the top of the form with the error message.
+  </Step>
+
+  <Step title="Log in">
+    After registration, use your email and password to log in at `/login`. See [Browsing tournaments](/guides/participants/browsing-tournaments) to get started without logging in, or go straight to [Enrolling in competitions](/guides/participants/inscriptions).
+  </Step>
+</Steps>
+
+## Request payload
+
+The form submits a `POST` request to `/api/v1/account` with the following JSON body:
+
+```json
+{
+  "firstName": "Juan",
+  "lastName": "Pérez",
+  "email": "juan@example.com",
+  "password": "mysecretpassword",
+  "documentType": "DNI",
+  "documentNumber": "12345678"
+}
+```
+
+## Validation rules
+
+<Warning>
+  All validations are enforced on the server. The frontend also validates before submitting, but never rely on client-side checks alone.
+</Warning>
+
+| Field | Rule |
+|---|---|
+| `email` | Must be a valid email address and must not already be in use. |
+| `password` | At least 8 characters. |
+| `firstName` | 3–50 characters, letters only (including Spanish accented characters). |
+| `lastName` | 3–50 characters, letters only (including Spanish accented characters). |
+| `documentType` | One of `DNI`, `CUIL`, `PASAPORTE`, `OTRO`. |
+| `documentNumber` | Required. Format validated against the selected `documentType`. |

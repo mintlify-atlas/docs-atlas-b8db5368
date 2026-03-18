@@ -1,0 +1,88 @@
+---
+title: "Environment variables"
+description: "Configure the backend using environment variables."
+---
+
+<Info>
+  Environment variables are read by Spring Boot at startup. You can supply them via a `.env` file (loaded by the IntelliJ EnvFile plugin or a process manager), by exporting them in your shell session before starting the application, or through your hosting platform's environment configuration.
+</Info>
+
+## Variable reference
+
+### Database
+
+| Variable      | Default                                            | Description                              |
+| ------------- | -------------------------------------------------- | ---------------------------------------- |
+| `DB_URL`      | `jdbc:postgresql://localhost:5432/TorneosGestion`  | PostgreSQL JDBC connection URL.          |
+| `DB_USER`     | `postgres`                                         | Database username.                       |
+| `DB_PASSWORD` | `1508`                                             | Database password.                       |
+
+### Admin account
+
+On first startup, the application seeds an admin account using these values.
+
+| Variable         | Default           | Description                              |
+| ---------------- | ----------------- | ---------------------------------------- |
+| `ADMIN_EMAIL`    | `admin@localhost` | Email address for the seeded admin user. |
+| `ADMIN_PASSWORD` | `admin123`        | Password for the seeded admin user.      |
+
+### Security
+
+| Variable          | Default   | Description                                              |
+| ----------------- | --------- | -------------------------------------------------------- |
+| `JWT_SECRET`      | `POO2025` | Secret key used to sign and verify JWT tokens.           |
+| `PASSWORD_PEPPER` | `POO2025` | Pepper string appended to passwords before hashing.      |
+
+<Warning>
+  The defaults for `JWT_SECRET`, `PASSWORD_PEPPER`, and `ADMIN_PASSWORD` are intentionally weak and exist only for local development. **Always replace them with strong, random values before deploying to a production environment.** Using the default values in production exposes all user accounts and sessions to trivial attacks.
+</Warning>
+
+## Non-environment properties
+
+The following settings are defined directly in `application.properties` and are not overridable via environment variables without modifying the file:
+
+| Property                            | Value         | Description                                                              |
+| ----------------------------------- | ------------- | ------------------------------------------------------------------------ |
+| `jwt.expiration`                    | `864000000`   | JWT token lifetime in milliseconds (10 days).                            |
+| `server.port`                       | `8080`        | Port the backend listens on.                                             |
+| `spring.jpa.hibernate.ddl-auto`     | `update`      | Hibernate schema mode. Tables are created or updated automatically on startup. |
+
+## Setting variables in your shell
+
+To export variables before running the application from a terminal:
+
+```bash
+export DB_URL=jdbc:postgresql://prod-host:5432/TorneosGestion
+export DB_USER=myuser
+export DB_PASSWORD=mysecurepassword
+export JWT_SECRET=my-very-long-random-secret
+export PASSWORD_PEPPER=my-random-pepper
+```
+
+Then start the backend:
+
+```bash
+./mvnw spring-boot:run
+# or, for a packaged JAR:
+java -jar target/poo2025-0.0.1-SNAPSHOT.jar
+```
+
+## Example `.env` file
+
+Copy `.env.example` to `.env` and fill in your values:
+
+```bash
+DB_URL=jdbc:postgresql://localhost:5432/TorneosGestion
+DB_USER=postgres
+DB_PASSWORD=yourpassword
+
+ADMIN_EMAIL=admin@yourdomain.com
+ADMIN_PASSWORD=yourAdminPassword
+
+JWT_SECRET=replace-with-a-long-random-string
+PASSWORD_PEPPER=replace-with-another-random-string
+```
+
+<Tip>
+  Generate secure random strings for `JWT_SECRET` and `PASSWORD_PEPPER` using a command like `openssl rand -hex 32`.
+</Tip>

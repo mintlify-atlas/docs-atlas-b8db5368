@@ -1,122 +1,115 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Torneos Gestion",
+  "theme": "maple",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#2563EB",
+    "light": "#EFF6FF",
+    "dark": "#1E3A5F"
   },
-  "favicon": "/favicon.svg",
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/Ericthered123/poo2025-Junin-grupo-Doyle-Olano-Uribe"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/Ericthered123/poo2025-Junin-grupo-Doyle-Olano-Uribe"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Overview",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Get Started",
+            "pages": ["introduction", "quickstart"]
+          },
+          {
+            "group": "Architecture",
+            "pages": ["architecture/overview", "architecture/data-model"]
+          }
+        ]
+      },
+      {
+        "tab": "User Guide",
+        "groups": [
+          {
+            "group": "Participants",
             "pages": [
-              "index",
-              "quickstart",
-              "development"
+              "guides/participants/registration",
+              "guides/participants/browsing-tournaments",
+              "guides/participants/inscriptions",
+              "guides/participants/profile"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Administrators",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
-            ]
-          },
-          {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "guides/admin/login",
+              "guides/admin/managing-tournaments",
+              "guides/admin/managing-competitions",
+              "guides/admin/managing-accounts"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "API Reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Authentication",
             "pages": [
-              "api-reference/introduction"
+              "api/auth/participant-auth",
+              "api/auth/admin-auth"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Tournaments",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api/tournaments/public-endpoints",
+              "api/tournaments/admin-endpoints"
+            ]
+          },
+          {
+            "group": "Competitions",
+            "pages": [
+              "api/competitions/public-endpoints",
+              "api/competitions/admin-endpoints"
+            ]
+          },
+          {
+            "group": "Participants",
+            "pages": [
+              "api/participants/account",
+              "api/participants/profile",
+              "api/participants/inscriptions"
+            ]
+          },
+          {
+            "group": "Admin Management",
+            "pages": [
+              "api/admin/accounts"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Deployment",
+        "groups": [
+          {
+            "group": "Setup",
+            "pages": [
+              "deployment/prerequisites",
+              "deployment/backend",
+              "deployment/frontend",
+              "deployment/environment-variables"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+    ]
   }
 }

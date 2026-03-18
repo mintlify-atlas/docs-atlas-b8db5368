@@ -1,0 +1,71 @@
+---
+title: "Introduction"
+description: "Torneos Gestion — a full-stack tournament management platform for organizing competitions and managing participant inscriptions."
+---
+
+## What is Torneos Gestion?
+
+Torneos Gestion is a tournament management platform that lets organizations create and publish sports or activity tournaments, manage their competitions, and allow participants to register and enroll — all through a clean web interface backed by a secure REST API.
+
+The platform is built with **Spring Boot** on the backend and **React** on the frontend. It uses **JWT authentication**, **PostgreSQL** for persistence, and exposes a full **OpenAPI/Swagger** interface for API exploration.
+
+<CardGroup cols={2}>
+  <Card title="Quick start" icon="rocket" href="/quickstart">
+    Get the system running locally in minutes
+  </Card>
+  <Card title="Participant guide" icon="user" href="/guides/participants/registration">
+    Register, browse tournaments, and enroll in competitions
+  </Card>
+  <Card title="Admin guide" icon="shield" href="/guides/admin/login">
+    Create tournaments, manage competitions, and oversee accounts
+  </Card>
+  <Card title="API reference" icon="code" href="/api/auth/participant-auth">
+    Explore every endpoint with request and response details
+  </Card>
+</CardGroup>
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Role-based access" icon="lock">
+    Two roles — **PARTICIPANTE** and **ADMIN** — each with dedicated authentication and access control enforced via Spring Security and JWT.
+  </Card>
+  <Card title="Tournament lifecycle" icon="trophy">
+    Create tournaments in draft state, add competitions, then publish them to make them visible to the public.
+  </Card>
+  <Card title="Competition types" icon="list">
+    Competitions can be configured with a capacity limit (capped enrollment) or without one (open enrollment).
+  </Card>
+  <Card title="Inscription management" icon="clipboard-list">
+    Participants enroll in individual competitions. Admins can view all enrollments per competition.
+  </Card>
+  <Card title="Self-service profile" icon="circle-user">
+    Participants can update their personal details and change their password without admin intervention.
+  </Card>
+  <Card title="OpenAPI / Swagger UI" icon="book-open">
+    The backend exposes a Swagger UI at `/swagger-ui/index.html` for interactive API exploration.
+  </Card>
+</CardGroup>
+
+## How it works
+
+The platform has three distinct user flows:
+
+1. **Public** — Anyone can browse published tournaments and their competitions without logging in.
+2. **Participant** — Registered users log in to enroll in competitions and manage their profile.
+3. **Admin** — Administrators manage the full lifecycle of tournaments, competitions, and accounts through a dedicated admin panel.
+
+## Technology stack
+
+| Layer | Technology |
+|---|---|
+| Backend framework | Spring Boot 3.5.6 |
+| Language | Java 17 |
+| Database | PostgreSQL |
+| Authentication | JWT (java-jwt 4.4.0) + Spring Security |
+| Password hashing | Password4j |
+| API docs | springdoc-openapi (Swagger UI) |
+| Frontend framework | React 19 + Vite |
+| Styling | Bootstrap 5 + Framer Motion |
+| HTTP client | Axios |
+| Routing | React Router v7 |

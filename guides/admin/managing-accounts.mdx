@@ -1,0 +1,99 @@
+---
+title: 'Managing accounts'
+description: 'Create additional admin accounts and view registered participants.'
+---
+
+The **Gestión de cuentas** page at `/admin/accounts` lets you manage administrator accounts and browse registered participants. It is accessible from the dashboard and contains two tabs: **Administradores** and **Participantes**.
+
+## View admin accounts
+
+The **Administradores** tab loads when you open the page. It fetches all admin accounts via:
+
+```http
+GET /api/v1/admin/accounts
+```
+
+The table shows each admin's internal ID, email address, and role (`ADMIN`). A summary card at the top displays the total number of admins.
+
+## Create a new admin account
+
+<Steps>
+  <Step title="Open the creation form">
+    On the **Administradores** tab, click **+ Nuevo administrador** in the top-right corner.
+  </Step>
+  <Step title="Fill in the account details">
+    Enter the required fields:
+
+    | Field | Required | Notes |
+    |---|---|---|
+    | `email` | Yes | Must be a valid email address |
+    | `password` | Yes | Choose a strong password |
+  </Step>
+  <Step title="Submit the form">
+    Click **Crear administrador**. The frontend sends:
+
+    ```http
+    POST /api/v1/admin/accounts
+    Content-Type: application/json
+
+    {
+      "email": "newadmin@example.com",
+      "password": "securepassword"
+    }
+    ```
+
+    The server responds with `201 Created` and the new admin account appears in the list.
+  </Step>
+</Steps>
+
+<Tip>
+New admin accounts can log in immediately at `/admin/login` using the credentials set during creation.
+</Tip>
+
+## Delete an admin account
+
+<Warning>
+You cannot delete your own account. The server enforces this restriction by comparing the ID of the account being deleted against the email of the currently authenticated admin. Attempting to delete yourself returns an error.
+</Warning>
+
+1. Locate the admin you want to remove in the **Administradores** table.
+2. Click **Eliminar** in their row.
+3. Confirm the action in the dialog. The frontend sends:
+
+```http
+DELETE /api/v1/admin/accounts/{id}
+```
+
+The server responds with `204 No Content` and the account is removed from the list.
+
+## View participants
+
+Switch to the **Participantes** tab to browse all registered participant accounts. The data is loaded with server-side pagination:
+
+```http
+GET /api/v1/admin/participants?busqueda=&page=0&size=10
+```
+
+| Parameter | Default | Description |
+|---|---|---|
+| `busqueda` | `""` | Search string — filters by name, email, or document number |
+| `page` | `0` | Zero-based page index |
+| `size` | `10` | Number of results per page |
+
+### Search
+
+Use the search box to filter participants by name, email address, or document number. Results update automatically after a short debounce delay (400 ms) as you type. Clear the search box to return to the full list.
+
+### Participant table columns
+
+| Column | Description |
+|---|---|
+| ID | Internal participant ID (formatted as `#0001`) |
+| NOMBRE | Full name (first + last name) |
+| EMAIL | Email address |
+| DOCUMENTO | Document type and number |
+| INSCRIPCIONES | Total number of competition enrollments |
+
+### Pagination
+
+If results span multiple pages, navigation controls appear below the table. Click a page number or use the **Anterior** / **Siguiente** buttons to move between pages.

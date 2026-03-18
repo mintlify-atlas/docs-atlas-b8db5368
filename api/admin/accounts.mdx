@@ -1,0 +1,255 @@
+---
+title: "Admin account management"
+description: "Create, list, and delete administrator accounts, and view participants — requires ADMIN JWT."
+---
+
+<Note>
+  All endpoints on this page require a valid **ADMIN** JWT. Pass it in every request as `Authorization: Bearer <token>`.
+</Note>
+
+---
+
+## Create an admin account
+
+```
+POST /api/v1/admin/accounts
+```
+
+Creates a new administrator account. Only an existing admin can create another admin.
+
+### Request body
+
+<ParamField body="email" type="string" required>
+  A valid, unique email address for the new admin account.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  Password for the new admin account. Cannot be blank.
+</ParamField>
+
+### Response — `201 Created`
+
+Returns the created `AdminAccountResponseDTO`.
+
+<ResponseField name="id" type="integer">
+  Unique identifier of the new admin account.
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  Email address of the new admin account.
+</ResponseField>
+
+### Example
+
+```bash
+curl -X POST http://localhost:8080/api/v1/admin/accounts \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "newadmin@example.com",
+    "password": "adminPass123"
+  }'
+```
+
+```json
+{
+  "id": 5,
+  "email": "newadmin@example.com"
+}
+```
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `400`  | Validation failed (missing or invalid email, blank password). |
+| `401`  | Missing or invalid JWT. |
+| `403`  | Authenticated user does not have the ADMIN role. |
+| `409`  | An account with the provided email already exists. |
+
+---
+
+## List all admin accounts
+
+```
+GET /api/v1/admin/accounts
+```
+
+Returns a list of all administrator accounts registered in the system.
+
+### Response — `200 OK`
+
+Returns an array of `AdminAccountResponseDTO` objects.
+
+<ResponseField name="id" type="integer">
+  Unique identifier of the admin account.
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  Email address of the admin account.
+</ResponseField>
+
+### Example
+
+```bash
+curl -X GET http://localhost:8080/api/v1/admin/accounts \
+  -H "Authorization: Bearer <token>"
+```
+
+```json
+[
+  {
+    "id": 1,
+    "email": "superadmin@example.com"
+  },
+  {
+    "id": 5,
+    "email": "newadmin@example.com"
+  }
+]
+```
+
+---
+
+## Delete an admin account
+
+```
+DELETE /api/v1/admin/accounts/{id}
+```
+
+Permanently removes an admin account from the system.
+
+<Warning>
+  An admin **cannot delete their own account**. Attempting to delete the account associated with the currently authenticated JWT returns a `400 Bad Request` error.
+</Warning>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The ID of the admin account to delete.
+</ParamField>
+
+### Response — `204 No Content`
+
+No response body is returned on success.
+
+### Example
+
+```bash
+curl -X DELETE http://localhost:8080/api/v1/admin/accounts/5 \
+  -H "Authorization: Bearer <token>"
+```
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `400`  | Attempting to delete your own account. |
+| `401`  | Missing or invalid JWT. |
+| `403`  | Authenticated user does not have the ADMIN role. |
+| `404`  | Admin account with the given ID not found. |
+
+---
+
+## List participants
+
+```
+GET /api/v1/admin/participants
+```
+
+Returns a paginated list of all participant accounts, with optional text search.
+
+### Query parameters
+
+<ParamField query="busqueda" type="string">
+  Optional search string to filter participants by name, surname, email, or document number. Defaults to an empty string (returns all participants).
+</ParamField>
+
+<ParamField query="page" type="integer">
+  Page number to retrieve (0-indexed). Defaults to `0`.
+</ParamField>
+
+<ParamField query="size" type="integer">
+  Number of results per page. Defaults to `10`.
+</ParamField>
+
+### Response — `200 OK`
+
+Returns a `PagedResponseDTO` wrapping an array of `ListParticipantResponseDTO` objects.
+
+<ResponseField name="content" type="array">
+  The participant records for the current page.
+
+  <Expandable title="ListParticipantResponseDTO fields">
+    <ResponseField name="id" type="integer">
+      Unique identifier of the participant.
+    </ResponseField>
+
+    <ResponseField name="nombre" type="string">
+      Participant's first name.
+    </ResponseField>
+
+    <ResponseField name="apellido" type="string">
+      Participant's last name.
+    </ResponseField>
+
+    <ResponseField name="email" type="string">
+      Participant's email address.
+    </ResponseField>
+
+    <ResponseField name="tipoDoc" type="string">
+      Document type (`DNI`, `PASAPORTE`, `CUIL`, or `OTRO`).
+    </ResponseField>
+
+    <ResponseField name="numDoc" type="string">
+      Participant's document number.
+    </ResponseField>
+
+    <ResponseField name="cantidadInscripciones" type="integer">
+      Total number of competition inscriptions.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="page" type="integer">
+  Current page index (0-indexed).
+</ResponseField>
+
+<ResponseField name="totalPages" type="integer">
+  Total number of pages available.
+</ResponseField>
+
+<ResponseField name="totalElements" type="integer">
+  Total number of participant records matching the query.
+</ResponseField>
+
+<ResponseField name="last" type="boolean">
+  `true` if this is the last page of results.
+</ResponseField>
+
+### Example
+
+```bash
+curl -X GET "http://localhost:8080/api/v1/admin/participants?busqueda=Juan&page=0&size=10" \
+  -H "Authorization: Bearer <token>"
+```
+
+```json
+{
+  "content": [
+    {
+      "id": 7,
+      "nombre": "Juan",
+      "apellido": "Pérez",
+      "email": "juan@example.com",
+      "tipoDoc": "DNI",
+      "numDoc": "34567890",
+      "cantidadInscripciones": 3
+    }
+  ],
+  "page": 0,
+  "totalPages": 1,
+  "totalElements": 1,
+  "last": true
+}
+```

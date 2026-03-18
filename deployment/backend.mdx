@@ -1,0 +1,113 @@
+---
+title: "Backend deployment"
+description: "Run the Spring Boot backend locally or in production."
+---
+
+The backend is a Spring Boot application that exposes a REST API on port `8080`. Follow the steps below to get it running.
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone <repository-url>
+    cd poo2025
+    ```
+  </Step>
+
+  <Step title="Configure environment variables">
+    Copy the example environment file and fill in your values:
+
+    ```bash
+    cp .env.example .env
+    ```
+
+    Open `.env` and set each variable for your environment. See [Environment variables](/deployment/environment-variables) for a full reference of what each variable controls.
+
+    <Note>
+      Spring Boot does not read `.env` files automatically. In IntelliJ, use the [EnvFile plugin](https://plugins.jetbrains.com/plugin/7861-envfile) or add the variables manually under **Run → Edit Configurations → Environment variables**. When running from a terminal, export the variables in your shell before invoking the Maven wrapper.
+    </Note>
+  </Step>
+
+  <Step title="Create the PostgreSQL database">
+    Connect to your PostgreSQL instance and run:
+
+    ```sql
+    CREATE DATABASE "TorneosGestion";
+    ```
+
+    The database name is case-sensitive. See [Prerequisites](/deployment/prerequisites) for full database setup instructions.
+  </Step>
+
+  <Step title="Start the application">
+    Use the Maven wrapper included in the repository. No separate Maven installation is required.
+
+    <Tabs>
+      <Tab title="Linux / macOS">
+        ```bash
+        ./mvnw spring-boot:run
+        ```
+      </Tab>
+      <Tab title="Windows">
+        ```bash
+        mvnw.cmd spring-boot:run
+        ```
+      </Tab>
+    </Tabs>
+
+    On first startup, Hibernate will automatically create the required tables in the database (`spring.jpa.hibernate.ddl-auto=update`). The seeded admin account is also created at this point.
+  </Step>
+
+  <Step title="Verify the API is running">
+    Send a request to the tournaments endpoint:
+
+    ```bash
+    curl http://localhost:8080/api/v1/tournaments
+    ```
+
+    You should receive an empty JSON array:
+
+    ```json
+    []
+    ```
+
+    You can also open the interactive API explorer in your browser:
+
+    ```
+    http://localhost:8080/swagger-ui/index.html
+    ```
+  </Step>
+</Steps>
+
+## Production: building a JAR
+
+For production deployments, build a self-contained JAR and run it directly with Java.
+
+<Steps>
+  <Step title="Package the application">
+    <Tabs>
+      <Tab title="Linux / macOS">
+        ```bash
+        ./mvnw clean package -DskipTests
+        ```
+      </Tab>
+      <Tab title="Windows">
+        ```bash
+        mvnw.cmd clean package -DskipTests
+        ```
+      </Tab>
+    </Tabs>
+
+    The compiled JAR is written to `target/poo2025-0.0.1-SNAPSHOT.jar`.
+  </Step>
+
+  <Step title="Run the JAR">
+    Make sure all environment variables are exported in the current shell session, then start the application:
+
+    ```bash
+    java -jar target/poo2025-0.0.1-SNAPSHOT.jar
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+  Always set strong, unique values for `JWT_SECRET`, `PASSWORD_PEPPER`, and `ADMIN_PASSWORD` before running in production. See [Environment variables](/deployment/environment-variables) for details.
+</Warning>

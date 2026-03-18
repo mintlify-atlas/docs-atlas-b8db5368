@@ -1,0 +1,93 @@
+---
+title: "Participant account"
+description: "Register a new participant account."
+---
+
+<Note>
+  This endpoint is public — no authentication is required to create an account.
+</Note>
+
+## Create a participant account
+
+```
+POST /api/v1/account
+```
+
+Registers a new participant in the system. Once created, the participant can authenticate via `POST /api/v1/auth` to receive a JWT for accessing protected endpoints.
+
+### Request body
+
+<ParamField body="email" type="string" required>
+  A valid, unique email address. Used as the login credential.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  Account password. Minimum 8 characters.
+</ParamField>
+
+<ParamField body="firstName" type="string" required>
+  Participant's first name. Between 3 and 50 characters. Letters only (accented characters and spaces allowed).
+</ParamField>
+
+<ParamField body="lastName" type="string" required>
+  Participant's last name. Between 3 and 50 characters. Letters only (accented characters and spaces allowed).
+</ParamField>
+
+<ParamField body="documentType" type="string" required>
+  Type of identification document. One of: `DNI`, `PASAPORTE`, `CUIL`, `OTRO`.
+</ParamField>
+
+<ParamField body="documentNumber" type="string" required>
+  The document number corresponding to the selected `documentType`. Must be consistent with the document type format.
+</ParamField>
+
+### Response — `201 Created`
+
+No response body is returned on success.
+
+### Example
+
+```bash
+curl -X POST http://localhost:8080/api/v1/account \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "juan@example.com",
+    "password": "securePass1",
+    "firstName": "Juan",
+    "lastName": "Pérez",
+    "documentType": "DNI",
+    "documentNumber": "34567890"
+  }'
+```
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `400`  | Validation failed. See the `errors` map in the response body for field-level details. |
+| `409`  | An account with the provided email already exists. |
+
+#### Validation error example
+
+```json
+{
+  "timestamp": "2026-03-18T10:00:00",
+  "status": 400,
+  "message": "Error de validación",
+  "errors": {
+    "email": "El email debe ser válido.",
+    "password": "La contraseña debe tener al menos 8 caracteres."
+  }
+}
+```
+
+#### Conflict error example
+
+```json
+{
+  "timestamp": "2026-03-18T10:00:00",
+  "status": 409,
+  "message": "Ya existe un participante con el email: juan@example.com",
+  "errors": null
+}
+```

@@ -1,0 +1,348 @@
+---
+title: "Admin tournament endpoints"
+description: "Create, update, publish, and delete tournaments — requires ADMIN JWT."
+---
+
+<Note>
+  All endpoints on this page require an `ADMIN` JWT. Obtain one from [`POST /api/v1/admin/auth`](/api/auth/admin-auth) and include it in every request:
+
+  ```
+  Authorization: Bearer <admin-token>
+  ```
+</Note>
+
+---
+
+## List all tournaments
+
+**`GET /api/v1/admin/tournaments`**
+
+Returns all tournaments ordered by start date descending, including unpublished ones.
+
+### Response
+
+**`200 OK`** — Array of tournament summary objects.
+
+<ResponseField name="id" type="number">
+  Unique identifier of the tournament.
+</ResponseField>
+
+<ResponseField name="nombre" type="string">
+  Name of the tournament.
+</ResponseField>
+
+<ResponseField name="fechaInicio" type="string">
+  Start date in `YYYY-MM-DD` format.
+</ResponseField>
+
+<ResponseField name="fechaFin" type="string">
+  End date in `YYYY-MM-DD` format.
+</ResponseField>
+
+<ResponseField name="publicado" type="boolean">
+  Whether the tournament is publicly visible to participants.
+</ResponseField>
+
+### Example
+
+```bash
+curl http://localhost:8080/api/v1/admin/tournaments \
+  -H "Authorization: Bearer <admin-token>"
+```
+
+**Response:**
+
+```json
+[
+  {
+    "id": 1,
+    "nombre": "Torneo de Verano 2025",
+    "fechaInicio": "2025-12-01",
+    "fechaFin": "2025-12-15",
+    "publicado": false
+  }
+]
+```
+
+---
+
+## Get tournament details
+
+**`GET /api/v1/admin/tournaments/{tId}`**
+
+Returns full details for a single tournament, including aggregated inscription totals.
+
+### Path parameters
+
+<ParamField path="tId" type="number" required>
+  The unique identifier of the tournament.
+</ParamField>
+
+### Response
+
+**`200 OK`**
+
+<ResponseField name="id" type="number">
+  Unique identifier of the tournament.
+</ResponseField>
+
+<ResponseField name="nombre" type="string">
+  Name of the tournament.
+</ResponseField>
+
+<ResponseField name="descripcion" type="string">
+  Description of the tournament.
+</ResponseField>
+
+<ResponseField name="fechaInicio" type="string">
+  Start date in `YYYY-MM-DD` format.
+</ResponseField>
+
+<ResponseField name="fechaFin" type="string">
+  End date in `YYYY-MM-DD` format.
+</ResponseField>
+
+<ResponseField name="publicado" type="boolean">
+  Whether the tournament is publicly visible.
+</ResponseField>
+
+<ResponseField name="totalInscripciones" type="number">
+  Total number of inscriptions across all competitions in this tournament.
+</ResponseField>
+
+<ResponseField name="montoTotal" type="number">
+  Total revenue collected from all inscriptions in this tournament.
+</ResponseField>
+
+### Errors
+
+| Status | Reason |
+|--------|--------|
+| `404 Not Found` | No tournament with the given ID exists. |
+
+### Example
+
+```bash
+curl http://localhost:8080/api/v1/admin/tournaments/1 \
+  -H "Authorization: Bearer <admin-token>"
+```
+
+**Response:**
+
+```json
+{
+  "id": 1,
+  "nombre": "Torneo de Verano 2025",
+  "descripcion": "Torneo anual de verano.",
+  "fechaInicio": "2025-12-01",
+  "fechaFin": "2025-12-15",
+  "publicado": false,
+  "totalInscripciones": 47,
+  "montoTotal": 23500.0
+}
+```
+
+---
+
+## Create a tournament
+
+**`POST /api/v1/admin/tournaments`**
+
+Creates a new tournament. Newly created tournaments are **not published** by default — use the [publish endpoint](#publish-a-tournament) to make them visible to participants.
+
+### Request body
+
+<ParamField body="name" type="string" required>
+  Name of the tournament.
+</ParamField>
+
+<ParamField body="description" type="string" required>
+  Description of the tournament.
+</ParamField>
+
+<ParamField body="startDate" type="string" required>
+  Start date in `YYYY-MM-DD` format. Must be today or a future date.
+</ParamField>
+
+<ParamField body="finishDate" type="string" required>
+  End date in `YYYY-MM-DD` format. Must be after `startDate`.
+</ParamField>
+
+### Response
+
+**`201 Created`** — The created tournament object.
+
+<ResponseField name="id" type="number">
+  Unique identifier assigned to the new tournament.
+</ResponseField>
+
+<ResponseField name="nombre" type="string">
+  Name of the tournament.
+</ResponseField>
+
+<ResponseField name="descripcion" type="string">
+  Description of the tournament.
+</ResponseField>
+
+<ResponseField name="fechaInicio" type="string">
+  Start date in `YYYY-MM-DD` format.
+</ResponseField>
+
+<ResponseField name="fechaFin" type="string">
+  End date in `YYYY-MM-DD` format.
+</ResponseField>
+
+<ResponseField name="estado" type="string">
+  Status of the tournament.
+</ResponseField>
+
+<ResponseField name="cantidadCompetencias" type="number">
+  Number of competitions (0 for a newly created tournament).
+</ResponseField>
+
+### Errors
+
+| Status | Reason |
+|--------|--------|
+| `400 Bad Request` | Validation failed — missing fields, past `startDate`, or `finishDate` not after `startDate` (`TournamentDateException`). |
+
+### Example
+
+```bash
+curl -X POST http://localhost:8080/api/v1/admin/tournaments \
+  -H "Authorization: Bearer <admin-token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Torneo de Verano 2025",
+    "description": "Torneo anual de verano.",
+    "startDate": "2025-12-01",
+    "finishDate": "2025-12-15"
+  }'
+```
+
+---
+
+## Update a tournament
+
+**`PUT /api/v1/admin/tournaments/{tId}`**
+
+Replaces all editable fields of an existing tournament. All fields are required.
+
+### Path parameters
+
+<ParamField path="tId" type="number" required>
+  The unique identifier of the tournament to update.
+</ParamField>
+
+### Request body
+
+<ParamField body="name" type="string" required>
+  New name of the tournament.
+</ParamField>
+
+<ParamField body="description" type="string" required>
+  New description of the tournament.
+</ParamField>
+
+<ParamField body="startDate" type="string" required>
+  New start date in `YYYY-MM-DD` format. Must be today or a future date.
+</ParamField>
+
+<ParamField body="finishDate" type="string" required>
+  New end date in `YYYY-MM-DD` format. Must be after `startDate`.
+</ParamField>
+
+### Response
+
+**`200 OK`** — The updated tournament object (same fields as the create response).
+
+### Errors
+
+| Status | Reason |
+|--------|--------|
+| `400 Bad Request` | Validation failed on one or more fields. |
+| `404 Not Found` | No tournament with the given ID exists. |
+
+### Example
+
+```bash
+curl -X PUT http://localhost:8080/api/v1/admin/tournaments/1 \
+  -H "Authorization: Bearer <admin-token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Torneo de Verano 2025 (Actualizado)",
+    "description": "Descripción actualizada.",
+    "startDate": "2025-12-05",
+    "finishDate": "2025-12-20"
+  }'
+```
+
+---
+
+## Delete a tournament
+
+**`DELETE /api/v1/admin/tournaments/{tId}`**
+
+Permanently deletes a tournament and all its associated data.
+
+<Warning>
+  This action is irreversible. Deleting a tournament also removes all its competitions and inscriptions.
+</Warning>
+
+### Path parameters
+
+<ParamField path="tId" type="number" required>
+  The unique identifier of the tournament to delete.
+</ParamField>
+
+### Response
+
+**`204 No Content`** — The tournament was deleted. No response body.
+
+### Errors
+
+| Status | Reason |
+|--------|--------|
+| `404 Not Found` | No tournament with the given ID exists. |
+
+### Example
+
+```bash
+curl -X DELETE http://localhost:8080/api/v1/admin/tournaments/1 \
+  -H "Authorization: Bearer <admin-token>"
+```
+
+---
+
+## Publish a tournament
+
+**`PATCH /api/v1/admin/tournaments/{tId}/published`**
+
+Marks a tournament as published, making it visible to participants in the public endpoints. No request body is required.
+
+<Tip>
+  Once a tournament is published, participants can browse its competitions and enroll. Make sure all competitions are correctly configured before publishing.
+</Tip>
+
+### Path parameters
+
+<ParamField path="tId" type="number" required>
+  The unique identifier of the tournament to publish.
+</ParamField>
+
+### Response
+
+**`200 OK`** — The updated tournament object with `estado` reflecting the published state (same fields as the create response).
+
+### Errors
+
+| Status | Reason |
+|--------|--------|
+| `404 Not Found` | No tournament with the given ID exists. |
+
+### Example
+
+```bash
+curl -X PATCH http://localhost:8080/api/v1/admin/tournaments/1/published \
+  -H "Authorization: Bearer <admin-token>"
+```

@@ -1,0 +1,207 @@
+---
+title: "Public competition endpoints"
+description: "Access competition details within published tournaments — no authentication required."
+---
+
+<Note>
+  These endpoints are fully public. No JWT or authentication header is needed. The tournament must be in **published** status for its competitions to be visible.
+</Note>
+
+## List competitions in a tournament
+
+```
+GET /api/v1/tournament/{tournamentId}/competitions
+```
+
+Returns all competitions belonging to a published tournament.
+
+### Path parameters
+
+<ParamField path="tournamentId" type="integer" required>
+  The ID of the published tournament.
+</ParamField>
+
+### Response
+
+Returns an array of `CompetitionPublicDTO` objects.
+
+<ResponseField name="id" type="integer">
+  Unique identifier of the competition.
+</ResponseField>
+
+<ResponseField name="nombre" type="string">
+  Name of the competition.
+</ResponseField>
+
+<ResponseField name="precioBase" type="number">
+  Base registration price.
+</ResponseField>
+
+<ResponseField name="cupo" type="integer">
+  Maximum number of participants allowed. `0` means unlimited.
+</ResponseField>
+
+<ResponseField name="estado" type="string">
+  Availability status. Either `CON_CUPO` (spots available) or `SIN_CUPO` (full).
+</ResponseField>
+
+### Example
+
+```bash
+curl -X GET http://localhost:8080/api/v1/tournament/1/competitions
+```
+
+```json
+[
+  {
+    "id": 3,
+    "nombre": "100m Llanos",
+    "precioBase": 500.0,
+    "cupo": 20,
+    "estado": "CON_CUPO"
+  },
+  {
+    "id": 4,
+    "nombre": "Salto en Alto",
+    "precioBase": 350.0,
+    "cupo": 10,
+    "estado": "SIN_CUPO"
+  }
+]
+```
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `404`  | Tournament not found or not published. |
+
+---
+
+## Get a single competition
+
+```
+GET /api/v1/tournament/{tournamentId}/competitions/{competitionId}
+```
+
+Returns a single competition from a published tournament.
+
+### Path parameters
+
+<ParamField path="tournamentId" type="integer" required>
+  The ID of the published tournament.
+</ParamField>
+
+<ParamField path="competitionId" type="integer" required>
+  The ID of the competition.
+</ParamField>
+
+### Response
+
+Returns a single `CompetitionPublicDTO` object (same fields as the list endpoint above).
+
+### Example
+
+```bash
+curl -X GET http://localhost:8080/api/v1/tournament/1/competitions/3
+```
+
+```json
+{
+  "id": 3,
+  "nombre": "100m Llanos",
+  "precioBase": 500.0,
+  "cupo": 20,
+  "estado": "CON_CUPO"
+}
+```
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `404`  | Tournament not found, not published, or competition not found. |
+
+---
+
+## Enroll in a competition
+
+```
+POST /api/v1/tournament/{tournamentId}/competitions/{competitionId}/inscription
+```
+
+Enrolls the authenticated participant in the specified competition.
+
+<Note>
+  This endpoint requires a valid **PARTICIPANTE** JWT. Pass it in the `Authorization` header as `Bearer <token>`.
+</Note>
+
+### Path parameters
+
+<ParamField path="tournamentId" type="integer" required>
+  The ID of the published tournament.
+</ParamField>
+
+<ParamField path="competitionId" type="integer" required>
+  The ID of the competition to enroll in.
+</ParamField>
+
+### Request body
+
+No request body is required. The authenticated user's identity is derived from the JWT.
+
+### Response — `201 Created`
+
+Returns an `InscriptionResponseDTO` object.
+
+<ResponseField name="id" type="integer">
+  Unique identifier of the inscription.
+</ResponseField>
+
+<ResponseField name="participanteId" type="integer">
+  ID of the participant who enrolled.
+</ResponseField>
+
+<ResponseField name="participanteEmail" type="string">
+  Email of the enrolled participant.
+</ResponseField>
+
+<ResponseField name="participanteNombre" type="string">
+  Full name of the enrolled participant.
+</ResponseField>
+
+<ResponseField name="precioFinal" type="number">
+  Final price charged for this inscription.
+</ResponseField>
+
+<ResponseField name="fechaInscripcion" type="string">
+  Date the inscription was created (ISO 8601 date).
+</ResponseField>
+
+### Example
+
+```bash
+curl -X POST http://localhost:8080/api/v1/tournament/1/competitions/3/inscription \
+  -H "Authorization: Bearer <token>"
+```
+
+```json
+{
+  "id": 42,
+  "participanteId": 7,
+  "participanteEmail": "juan@example.com",
+  "participanteNombre": "Juan Pérez",
+  "precioFinal": 500.0,
+  "fechaInscripcion": "2026-03-18"
+}
+```
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `401`  | Missing or invalid JWT. |
+| `403`  | Authenticated user does not have the PARTICIPANTE role. |
+| `404`  | Tournament or competition not found. |
+| `409`  | Participant is already enrolled in this competition. |
+| `400`  | Competition has no remaining spots (`NoCupoException`). |

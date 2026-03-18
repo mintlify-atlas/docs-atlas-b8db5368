@@ -1,0 +1,207 @@
+---
+title: "Data model"
+description: "Entity relationships and domain objects in Torneos Gestion."
+---
+
+This page describes every entity in the domain, their fields, relationships, and the two inheritance hierarchies used for the State Pattern.
+
+---
+
+## Entity map
+
+```
+Torneo ──< Competencia ──< Inscripcion >── Participante
+  │              │
+ EstadoTorneo  EstadoCompetencia
+```
+
+- A **Torneo** has zero or more **Competencia** (one-to-many).
+- A **Competencia** has zero or more **Inscripcion** (one-to-many).
+- A **Participante** has zero or more **Inscripcion** (one-to-many).
+- **Inscripcion** is the join entity linking a Participante to a Competencia. The combination `(participante_id, competencia_id)` is unique.
+
+---
+
+## Entities
+
+### Torneo
+
+Mapped to table `torneos`. Base class for the tournament hierarchy.
+
+| Field | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | `Long` | No | Auto-generated primary key |
+| `nombre` | `String` | No | Tournament name |
+| `descripcion` | `String` | No | Tournament description |
+| `fechaInicio` | `LocalDate` | No | Start date |
+| `fechaFin` | `LocalDate` | No | End date |
+| `competencias` | `Set<Competencia>` | — | One-to-many; cascade all, orphan removal |
+| `estado` | `EstadoTorneo` | No | Many-to-one; current State Pattern object |
+
+The `Torneo` class delegates state-sensitive operations to its `EstadoTorneo`:
+
+```java
+public void publicar()                        { estado.publicar(this); }
+public void agregarCompetencia(Competencia c) { estado.agregarCompetencia(this, c); }
+public void eliminar()                        { estado.eliminar(this); }
+public void editar(String nuevoNombre)        { estado.editar(this, nuevoNombre); }
+```
+
+**JPA inheritance strategy:** `JOINED` — the base `torneos` table holds common fields; subclass tables (if any) hold additional columns.
+
+---
+
+### EstadoTorneo (State pattern)
+
+Mapped to table `estadoTorneos` using `SINGLE_TABLE` inheritance with a `tipo_estado` discriminator column. Both concrete states are stored as rows in this table.
+
+| Discriminator value | Class | Behavior |
+|---|---|---|
+| `NO_PUBLICADO` | `TorneoNoPublicado` | Allows editing, adding competitions, and deletion |
+| `PUBLICADO` | `TorneoPublicado` | Blocks all mutations; tournament is publicly visible |
+
+**Transition:** An admin calls `PATCH /api/v1/admin/tournaments/{id}/published`. The service fetches the `PUBLICADO` state entity from the repository and calls `torneo.cambiarEstado(estadoPublicado)`.
+
+<Warning>
+  Once a tournament is published it cannot be edited, have competitions added, or be deleted. All such attempts throw `IllegalStateException`.
+</Warning>
+
+---
+
+### Competencia
+
+Mapped to table `competencias`.
+
+| Field | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | `Long` | No | Auto-generated primary key |
+| `nombre` | `String` | No | Competition name |
+| `precioBase` | `double` | No | Base enrollment price |
+| `cupo` | `int` | No | Maximum number of participants |
+| `torneo` | `Torneo` | No | Many-to-one parent tournament |
+| `inscripciones` | `Set<Inscripcion>` | — | One-to-many; cascade all, orphan removal |
+| `estado` | `EstadoCompetencia` | No | Many-to-one; current State Pattern object |
+
+Enrollment and capacity logic is delegated to `EstadoCompetencia`. Price discounts and final price calculation are handled in `InscripcionService`.
+
+---
+
+### EstadoCompetencia (State pattern)
+
+Mapped to table `estado_competencia` using `SINGLE_TABLE` inheritance with a `tipo_estado` discriminator column.
+
+| Discriminator value | Class | Behavior |
+|---|---|---|
+| `CON_CUPO` | `CompetenciaConCupo` | Accepts enrollments while `inscripciones.size() < cupo`; throws `IllegalStateException` when full |
+| `SIN_CUPO` | `CompetenciaSinCupo` | Rejects all enrollments with `IllegalStateException` |
+
+**Transition:** When the number of inscriptions reaches the `cupo` limit, the service fetches the `SIN_CUPO` state from the repository and updates the competition's state.
+
+<Note>
+  The service is responsible for fetching persisted state entities from `EstadoCompetenciaRepository`. State objects are never instantiated with `new` at runtime.
+</Note>
+
+---
+
+### Participante
+
+Mapped to table `participantes`. Represents both regular users and admins — distinguished by the `rol` field.
+
+| Field | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | `Long` | No | Auto-generated primary key |
+| `email` | `String` | No | Unique; used as login identifier |
+| `password` | `String` | No | Hashed with Password4j + pepper |
+| `nombre` | `String` | No | First name |
+| `apellido` | `String` | No | Last name |
+| `tipoDoc` | `TipoDoc` | Yes | Document type enum |
+| `numDoc` | `String` | Yes | Document number |
+| `rol` | `Rol` | No | `PARTICIPANTE` (default) or `ADMIN` |
+| `createdAt` | `LocalDateTime` | No | Set automatically on insert by `@CreationTimestamp` |
+| `inscripciones` | `List<Inscripcion>` | — | One-to-many; cascade all |
+
+---
+
+### Inscripcion
+
+Mapped to table `inscripciones`. Join entity between `Participante` and `Competencia`.
+
+| Field | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | `Long` | No | Auto-generated primary key |
+| `participante` | `Participante` | No | Many-to-one |
+| `competencia` | `Competencia` | No | Many-to-one |
+| `precioFinal` | `double` | No | Calculated by `InscripcionService` (may include discounts) |
+| `fechaInscripcion` | `LocalDate` | No | Set to `LocalDate.now()` on creation |
+
+**Unique constraint:** `(participante_id, competencia_id)` — a participant can enroll in the same competition only once.
+
+---
+
+## Enumerations
+
+### Rol
+
+Stored as a `STRING` in the `participantes` table.
+
+| Value | Description |
+|---|---|
+| `PARTICIPANTE` | Standard user — can browse and enroll in competitions |
+| `ADMIN` | Administrator — full access to tournament and account management |
+
+### TipoDoc
+
+Document type for participant identity. Stored as a `STRING`.
+
+| Value | Description |
+|---|---|
+| `DNI` | Documento Nacional de Identidad |
+| `PASAPORTE` | Passport |
+| `CUIL` | CUIL (Argentine tax ID) |
+| `OTRO` | Other document type |
+
+---
+
+## Inheritance summary
+
+<Tabs>
+  <Tab title="Tournament state hierarchy">
+    ```
+    EstadoTorneo (abstract, SINGLE_TABLE, table: estadoTorneos)
+    ├── TorneoNoPublicado  [discriminator: NO_PUBLICADO]
+    │     publicar()           → delegates to service
+    │     agregarCompetencia() → adds to torneo.getCompetencias()
+    │     eliminar()           → clears competencias
+    │     editar()             → sets new nombre
+    └── TorneoPublicado    [discriminator: PUBLICADO]
+          publicar()           → no-op (already published)
+          agregarCompetencia() → throws IllegalStateException
+          eliminar()           → throws IllegalStateException
+          editar()             → throws IllegalStateException
+    ```
+  </Tab>
+  <Tab title="Competition enrollment state hierarchy">
+    ```
+    EstadoCompetencia (abstract, SINGLE_TABLE, table: estado_competencia)
+    ├── CompetenciaConCupo  [discriminator: CON_CUPO]
+    │     inscribir() → adds inscription if cupo not reached;
+    │                   throws IllegalStateException if full
+    └── CompetenciaSinCupo [discriminator: SIN_CUPO]
+          inscribir() → always throws IllegalStateException
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Relationship summary
+
+| Relationship | Cardinality | Cascade | Unique constraint |
+|---|---|---|---|
+| `Torneo` → `Competencia` | One-to-many | ALL + orphan removal | — |
+| `Competencia` → `Inscripcion` | One-to-many | ALL + orphan removal | — |
+| `Participante` → `Inscripcion` | One-to-many | ALL | — |
+| `Inscripcion` → `Participante` | Many-to-one | — | — |
+| `Inscripcion` → `Competencia` | Many-to-one | — | `(participante_id, competencia_id)` |
+| `Torneo` → `EstadoTorneo` | Many-to-one | — | — |
+| `Competencia` → `EstadoCompetencia` | Many-to-one | — | — |

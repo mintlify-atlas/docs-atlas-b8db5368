@@ -1,0 +1,167 @@
+---
+title: "Participant profile"
+description: "View and update your participant profile — requires PARTICIPANTE JWT."
+---
+
+<Note>
+  All endpoints on this page require a valid **PARTICIPANTE** JWT. Pass it in every request as `Authorization: Bearer <token>`.
+</Note>
+
+---
+
+## Get profile
+
+```
+GET /api/v1/participantes/me
+```
+
+Returns the authenticated participant's profile, including a summary of their total inscriptions.
+
+### Response — `200 OK`
+
+<ResponseField name="id" type="integer">
+  Unique identifier of the participant.
+</ResponseField>
+
+<ResponseField name="firstName" type="string">
+  Participant's first name.
+</ResponseField>
+
+<ResponseField name="lastName" type="string">
+  Participant's last name.
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  Email address used for login.
+</ResponseField>
+
+<ResponseField name="documentType" type="string">
+  Type of identification document (`DNI`, `PASAPORTE`, `CUIL`, or `OTRO`).
+</ResponseField>
+
+<ResponseField name="documentNumber" type="string">
+  The participant's document number.
+</ResponseField>
+
+<ResponseField name="totalInscripciones" type="integer">
+  Total number of competition inscriptions this participant has made.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  ISO 8601 datetime when the account was created.
+</ResponseField>
+
+### Example
+
+```bash
+curl -X GET http://localhost:8080/api/v1/participantes/me \
+  -H "Authorization: Bearer <token>"
+```
+
+```json
+{
+  "id": 7,
+  "firstName": "Juan",
+  "lastName": "Pérez",
+  "email": "juan@example.com",
+  "documentType": "DNI",
+  "documentNumber": "34567890",
+  "totalInscripciones": 3,
+  "createdAt": "2026-01-10T14:30:00"
+}
+```
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `401`  | Missing or invalid JWT. |
+| `403`  | Authenticated user does not have the PARTICIPANTE role. |
+
+---
+
+## Update profile
+
+```
+PUT /api/v1/participantes/me
+```
+
+Updates the authenticated participant's first and last name.
+
+### Request body
+
+<ParamField body="firstName" type="string" required>
+  Updated first name. Between 3 and 50 characters. Letters only (accented characters and spaces allowed).
+</ParamField>
+
+<ParamField body="lastName" type="string" required>
+  Updated last name. Between 3 and 50 characters. Letters only (accented characters and spaces allowed).
+</ParamField>
+
+### Response — `200 OK`
+
+No response body is returned on success.
+
+### Example
+
+```bash
+curl -X PUT http://localhost:8080/api/v1/participantes/me \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "firstName": "Juan Carlos",
+    "lastName": "Pérez"
+  }'
+```
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `400`  | Validation failed — name too short, too long, or contains invalid characters. |
+| `401`  | Missing or invalid JWT. |
+| `403`  | Authenticated user does not have the PARTICIPANTE role. |
+
+---
+
+## Change password
+
+```
+PATCH /api/v1/participantes/me/password
+```
+
+Changes the authenticated participant's password. The current password must be provided for verification.
+
+### Request body
+
+<ParamField body="currentPassword" type="string" required>
+  The participant's existing password. Cannot be blank.
+</ParamField>
+
+<ParamField body="newPassword" type="string" required>
+  The desired new password. Minimum 8 characters.
+</ParamField>
+
+### Response — `200 OK`
+
+No response body is returned on success.
+
+### Example
+
+```bash
+curl -X PATCH http://localhost:8080/api/v1/participantes/me/password \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "currentPassword": "oldPassword1",
+    "newPassword": "newSecurePass2"
+  }'
+```
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `400`  | `newPassword` is shorter than 8 characters. |
+| `401`  | Missing or invalid JWT, or `currentPassword` is incorrect. |
+| `403`  | Authenticated user does not have the PARTICIPANTE role. |

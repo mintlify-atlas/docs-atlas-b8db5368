@@ -1,0 +1,68 @@
+---
+title: 'Admin login'
+description: 'How to access the administrator panel.'
+---
+
+The administrator panel is accessed through a dedicated login page that is separate from the participant login. The URL is not linked from any public page — navigate to it directly.
+
+<Info>
+The admin login endpoint (`POST /api/v1/admin/auth`) is distinct from the participant auth endpoint. Regular participant accounts cannot authenticate here; attempting to do so returns an `UnauthorizedRoleException`.
+</Info>
+
+## Accessing the login page
+
+Navigate directly to `/admin/login` in your browser. You will see the **Panel de administración** login form.
+
+## Default credentials
+
+On a fresh deployment, the system seeds a default admin account using the following environment variables:
+
+| Variable | Default value |
+|---|---|
+| `ADMIN_EMAIL` | `admin@localhost` |
+| `ADMIN_PASSWORD` | `admin123` |
+
+<Warning>
+Change the default password immediately after your first login. The seed credentials are well-known and must not be used in production.
+</Warning>
+
+## Signing in
+
+<Steps>
+  <Step title="Open the admin login page">
+    Navigate to `/admin/login` in your browser.
+  </Step>
+  <Step title="Enter your credentials">
+    Fill in the **Email** and **Password** fields with your admin account credentials.
+  </Step>
+  <Step title="Submit the form">
+    Click **Ingresar como administrador**. The frontend sends the following request to the backend:
+
+    ```http
+    POST /api/v1/admin/auth
+    Content-Type: application/json
+
+    {
+      "email": "admin@localhost",
+      "password": "admin123"
+    }
+    ```
+
+    On success, the server returns a JWT token and your account details.
+  </Step>
+  <Step title="Dashboard redirect">
+    After a successful login you are automatically redirected to `/admin/dashboard`.
+  </Step>
+</Steps>
+
+## Session expiry
+
+If your session expires, the application redirects you back to `/admin/login?expired=true` and displays a warning message. Sign in again to resume your session.
+
+## Participant accounts cannot log in here
+
+Only accounts with the `ADMIN` role can authenticate via this endpoint. If a participant email is submitted, the server throws `UnauthorizedRoleException` and the form displays an error.
+
+<Tip>
+Participants have their own login page at `/login`. If someone reports they cannot access the admin panel, confirm they are using an admin-role account.
+</Tip>
