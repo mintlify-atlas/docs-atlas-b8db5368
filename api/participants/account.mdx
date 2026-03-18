@@ -73,8 +73,8 @@ curl -X POST http://localhost:8080/api/v1/account \
 {
   "timestamp": "2026-03-18T10:00:00",
   "status": 400,
-  "message": "Error de validación",
-  "errors": {
+  "error": "Error de validación",
+  "validationErrors": {
     "email": "El email debe ser válido.",
     "password": "La contraseña debe tener al menos 8 caracteres."
   }
@@ -87,7 +87,7 @@ curl -X POST http://localhost:8080/api/v1/account \
 {
   "timestamp": "2026-03-18T10:00:00",
   "status": 409,
-  "message": "Ya existe un participante con el email: juan@example.com",
-  "errors": null
+  "error": "Ya existe un participante con el email: juan@example.com",
+  "validationErrors": null
 }
 ```

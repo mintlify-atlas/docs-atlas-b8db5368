@@ -33,13 +33,7 @@ The page displays:
     | `cupo` | Yes | Capacity limit — must be at least 1 |
     | `precio` | Yes | Base registration price — must be ≥ 0 |
 
-    The capacity value determines the competition type on the backend:
-    - **`cupo` ≥ 1** → `CompetenciaConCupo` (enrollment closes when capacity is reached)
-    - **`cupo` = 0 or omitted** → `CompetenciaSinCupo` (unlimited enrollment)
-
-    <Info>
-    The current frontend form requires `cupo` to be at least 1. If you need unlimited enrollment, set a very high value or contact your backend team to adjust the business logic.
-    </Info>
+    The `cupo` field must be at least `1`. The competition is created as a `CompetenciaConCupo` — enrollment closes when the capacity is reached. The system transitions the competition to `SIN_CUPO` state automatically when all spots are filled.
   </Step>
   <Step title="Save the competition">
     Click **Guardar**. The frontend sends:
@@ -70,7 +64,7 @@ The competitions table shows a summary row for each competition:
 | CUPO | Capacity limit |
 | INSCRIPTOS | Number of current enrollments |
 | RECAUDADO | Total revenue from enrollments |
-| ESTADO | `Con cupo` (has capacity) or `Sin cupo` (unlimited) |
+| ESTADO | `Con cupo` (spots available) or `Sin cupo` (at full capacity) |
 
 To fetch full details for a single competition directly via the API:
 
