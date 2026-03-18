@@ -1,0 +1,142 @@
+{
+  "projectType": "saas",
+  "projectName": "Torneos Gestion",
+  "projectDescription": "A full-stack tournament management platform with role-based access for participants and administrators, built with Spring Boot and React.",
+  "theme": "maple",
+  "primaryColor": "#2563EB",
+  "lightColor": "#EFF6FF",
+  "darkColor": "#1E3A5F",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Overview",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["introduction", "quickstart"]
+          },
+          {
+            "group": "Architecture",
+            "pages": ["architecture/overview", "architecture/data-model"]
+          }
+        ]
+      },
+      {
+        "tab": "User Guide",
+        "groups": [
+          {
+            "group": "Participants",
+            "pages": [
+              "guides/participants/registration",
+              "guides/participants/browsing-tournaments",
+              "guides/participants/inscriptions",
+              "guides/participants/profile"
+            ]
+          },
+          {
+            "group": "Administrators",
+            "pages": [
+              "guides/admin/login",
+              "guides/admin/managing-tournaments",
+              "guides/admin/managing-competitions",
+              "guides/admin/managing-accounts"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Authentication",
+            "pages": [
+              "api/auth/participant-auth",
+              "api/auth/admin-auth"
+            ]
+          },
+          {
+            "group": "Tournaments",
+            "pages": [
+              "api/tournaments/public-endpoints",
+              "api/tournaments/admin-endpoints"
+            ]
+          },
+          {
+            "group": "Competitions",
+            "pages": [
+              "api/competitions/public-endpoints",
+              "api/competitions/admin-endpoints"
+            ]
+          },
+          {
+            "group": "Participants",
+            "pages": [
+              "api/participants/account",
+              "api/participants/profile",
+              "api/participants/inscriptions"
+            ]
+          },
+          {
+            "group": "Admin Management",
+            "pages": [
+              "api/admin/accounts"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Deployment",
+        "groups": [
+          {
+            "group": "Setup",
+            "pages": [
+              "deployment/prerequisites",
+              "deployment/backend",
+              "deployment/frontend",
+              "deployment/environment-variables"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Role-based access control (PARTICIPANTE and ADMIN roles)",
+    "Tournament lifecycle management (create, publish, update, delete)",
+    "Competition management with optional capacity limits (CompetenciaConCupo / CompetenciaSinCupo)",
+    "Participant registration and self-service profile management",
+    "Inscription system for participants to enroll in competitions",
+    "JWT-based authentication with password hashing via Password4j",
+    "OpenAPI/Swagger UI for API exploration",
+    "React frontend with public, participant, and admin views"
+  ],
+  "publicApiSurface": [
+    "POST /api/v1/auth — Participant login",
+    "POST /api/v1/account — Participant registration",
+    "GET /api/v1/tournaments — List published tournaments",
+    "GET /api/v1/tournament/{tournamentId} — Get a single published tournament",
+    "GET /api/v1/tournament/{tournamentId}/competitions — List competitions of a tournament",
+    "GET /api/v1/tournament/{tournamentId}/competitions/{competitionId} — Get competition details",
+    "POST /api/v1/tournament/{tournamentId}/competitions/{competitionId}/inscription — Enroll in a competition (PARTICIPANTE)",
+    "GET /api/v1/participantes/me — Get participant profile (PARTICIPANTE)",
+    "PUT /api/v1/participantes/me — Update participant profile (PARTICIPANTE)",
+    "PATCH /api/v1/participantes/me/password — Change password (PARTICIPANTE)",
+    "GET /api/v1/inscriptions — List my inscriptions (PARTICIPANTE)",
+    "GET /api/v1/inscriptions/{id} — Get single inscription (PARTICIPANTE)",
+    "POST /api/v1/admin/auth — Admin login",
+    "POST /api/v1/admin/accounts — Create admin account (ADMIN)",
+    "GET /api/v1/admin/accounts — List admins (ADMIN)",
+    "DELETE /api/v1/admin/accounts/{id} — Delete admin (ADMIN)",
+    "GET /api/v1/admin/participants — List participants paginated (ADMIN)",
+    "GET /api/v1/admin/tournaments — List all tournaments (ADMIN)",
+    "POST /api/v1/admin/tournaments — Create tournament (ADMIN)",
+    "PUT /api/v1/admin/tournaments/{tId} — Update tournament (ADMIN)",
+    "DELETE /api/v1/admin/tournaments/{tId} — Delete tournament (ADMIN)",
+    "PATCH /api/v1/admin/tournaments/{tId}/published — Publish tournament (ADMIN)",
+    "GET /api/v1/admin/tournaments/{tournamentId}/competitions — List competitions admin view (ADMIN)",
+    "POST /api/v1/admin/tournaments/{tournamentId}/competitions — Create competition (ADMIN)",
+    "PUT /api/v1/admin/tournaments/{tournamentId}/competitions/{competitionId} — Update competition (ADMIN)",
+    "DELETE /api/v1/admin/tournaments/{tournamentId}/competitions/{competitionId} — Delete competition (ADMIN)",
+    "GET /api/v1/admin/tournaments/{tournamentId}/competitions/{competitionId}/inscriptions — List inscriptions for a competition (ADMIN)"
+  ]
+}
